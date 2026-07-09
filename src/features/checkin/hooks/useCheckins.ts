@@ -10,6 +10,7 @@ import { createId } from "@/utils/id";
 export function useCheckins() {
   const [checkins, setCheckins] = useState<Checkin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     const repos = await getRepos();
@@ -19,11 +20,16 @@ export function useCheckins() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const repos = await getRepos();
-      const list = await repos.checkins.getAll();
-      if (!cancelled) {
-        setCheckins(list);
-        setIsLoading(false);
+      try {
+        const repos = await getRepos();
+        const list = await repos.checkins.getAll();
+        if (!cancelled) setCheckins(list);
+      } catch (e) {
+        // Firestore未設定・ルール未適用などでも画面を止めない
+        console.error("チェックインの読み込みに失敗", e);
+        if (!cancelled) setError("チェックインを読み込めませんでした");
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     })();
     return () => {
@@ -48,5 +54,5 @@ export function useCheckins() {
     [reload],
   );
 
-  return { checkins, isLoading, addCheckin, reload };
+  return { checkins, isLoading, error, addCheckin, reload };
 }

@@ -18,7 +18,7 @@ import { CheckinCard } from "./CheckinCard";
 /** ジムマップ: チェックインを地図（またはリスト）で表示し、新規チェックインできる */
 export function GymMapView() {
   const mounted = useHasMounted();
-  const { checkins, isLoading, addCheckin } = useCheckins();
+  const { checkins, isLoading, error, addCheckin } = useCheckins();
   const { name, saveName } = useUserName();
   const speak = useMascotStore((s) => s.speak);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -62,6 +62,12 @@ export function GymMapView() {
         <Plus className="size-4" data-icon="inline-start" />
         ジムにチェックイン
       </Button>
+
+      {error && (
+        <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-xs text-destructive">
+          {error}（Firebaseの匿名認証・Firestore・ルールの設定をご確認ください）
+        </p>
+      )}
 
       <section className="mt-5">
         <h2 className="mb-2 text-sm font-bold">最近のチェックイン</h2>

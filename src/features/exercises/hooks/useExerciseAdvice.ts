@@ -27,11 +27,14 @@ export function useExerciseAdvice(exerciseId: string) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const repos = await getRepos();
-      const list = await repos.advice.getByExercise(exerciseId);
-      if (!cancelled) {
-        setAdvice(list);
-        setIsLoading(false);
+      try {
+        const repos = await getRepos();
+        const list = await repos.advice.getByExercise(exerciseId);
+        if (!cancelled) setAdvice(list);
+      } catch (e) {
+        console.error("アドバイスの読み込みに失敗", e);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     })();
     return () => {

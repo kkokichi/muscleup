@@ -8,27 +8,50 @@ import {
 import { getFirestore, type Firestore } from "firebase/firestore";
 
 /**
- * Firebase 接続設定。NEXT_PUBLIC_FIREBASE_* が未設定の場合、
- * アプリはローカル（localStorage）Repositoryで動作する。
+ * Firebase 接続設定。
+ * Firebaseのウェブ設定（apiKey等）は公開情報であり、クライアントバンドルに
+ * 含まれる前提のもの。セキュリティは Firestore ルール + 認証で担保する
+ * （docs/13-backend-setup.md, firestore.rules）。そのため既定値をコードに
+ * 埋め込み、環境変数（NEXT_PUBLIC_FIREBASE_*）があればそれで上書きする。
  */
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBjY99pz342UbDYBk8nYbwbg4lalqt3LxA",
+  authDomain: "muscleup-c3f46.firebaseapp.com",
+  projectId: "muscleup-c3f46",
+  storageBucket: "muscleup-c3f46.firebasestorage.app",
+  messagingSenderId: "411709345538",
+  appId: "1:411709345538:web:5ac3850bdbac106af53c1b",
+} as const;
+
+function getFirebaseConfig() {
+  return {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || DEFAULT_FIREBASE_CONFIG.apiKey,
+    authDomain:
+      process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ||
+      DEFAULT_FIREBASE_CONFIG.authDomain,
+    projectId:
+      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
+      DEFAULT_FIREBASE_CONFIG.projectId,
+    storageBucket:
+      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
+      DEFAULT_FIREBASE_CONFIG.storageBucket,
+    messagingSenderId:
+      process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ||
+      DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || DEFAULT_FIREBASE_CONFIG.appId,
+  };
+}
+
+/** Firebase 設定が揃っているか（既定値があるため通常true） */
 export function isFirebaseConfigured(): boolean {
-  return Boolean(
-    process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
-      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  );
+  const config = getFirebaseConfig();
+  return Boolean(config.apiKey && config.projectId);
 }
 
 function getFirebaseApp(): FirebaseApp {
   const existing = getApps()[0];
   if (existing) return existing;
-  return initializeApp({
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  });
+  return initializeApp(getFirebaseConfig());
 }
 
 export function getDb(): Firestore {
