@@ -34,7 +34,7 @@ export function RecentWorkoutsList({ logs, exerciseById }: RecentWorkoutsListPro
             .slice(0, 3)
             .join("・");
           return (
-            <Link key={log.id} href={`/history/${log.id}`} className="block">
+            <Link key={log.id} href={`/history/detail?id=${log.id}`} className="block">
               <Card className="border-border bg-card transition-colors active:bg-secondary/50">
                 <CardContent className="flex items-center justify-between p-3.5">
                   <div className="min-w-0">

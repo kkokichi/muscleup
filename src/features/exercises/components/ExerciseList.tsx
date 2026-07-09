@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ChevronRight, Search } from "lucide-react";
 import type { MuscleCategoryId } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,13 +21,10 @@ const EQUIPMENT_LABELS: Record<string, string> = {
   cable: "ケーブル",
 };
 
-interface ExerciseListProps {
-  /** 部位マップからの遷移時に初期フィルタを適用 */
-  initialCategory?: string;
-}
-
-export function ExerciseList({ initialCategory }: ExerciseListProps) {
+export function ExerciseList() {
   const { exercises, isLoading } = useExercises();
+  // 部位マップからの遷移時（?category=chest 等）に初期フィルタを適用
+  const initialCategory = useSearchParams().get("category");
   const [keyword, setKeyword] = useState("");
   const [category, setCategory] = useState<MuscleCategoryId | null>(
     MUSCLE_CATEGORY_IDS.includes(initialCategory as MuscleCategoryId)
