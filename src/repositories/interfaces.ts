@@ -6,6 +6,7 @@ import type {
   MuscleCategoryId,
   UserProfile,
   WorkoutLog,
+  WorkoutTemplate,
 } from "@/types";
 
 export interface WorkoutLogRepository {
@@ -30,11 +31,19 @@ export interface RecordRepository {
   getByExercise(exerciseId: string): Promise<ExerciseRecord | null>;
   /** upsert（exerciseId 単位） */
   save(record: ExerciseRecord): Promise<void>;
+  replaceAll(records: ExerciseRecord[]): Promise<void>;
 }
 
 export interface UserProfileRepository {
   get(): Promise<UserProfile>;
   save(profile: UserProfile): Promise<void>;
+}
+
+export interface WorkoutTemplateRepository {
+  getAll(): Promise<WorkoutTemplate[]>;
+  getById(id: string): Promise<WorkoutTemplate | null>;
+  save(template: WorkoutTemplate): Promise<void>;
+  delete(id: string): Promise<void>;
 }
 
 /** ジムチェックイン（共有） */
@@ -60,6 +69,7 @@ export interface Repositories {
   exercises: ExerciseRepository;
   records: RecordRepository;
   userProfile: UserProfileRepository;
+  workoutTemplates: WorkoutTemplateRepository;
   checkins: CheckinRepository;
   advice: AdviceRepository;
 }

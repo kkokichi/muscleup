@@ -25,6 +25,27 @@ export interface WorkoutLog {
   createdAt: string;
 }
 
+export interface WorkoutTemplateSet {
+  weightKg: number;
+  reps: number;
+  rpe?: number;
+}
+
+export interface WorkoutTemplateEntry {
+  exerciseId: string;
+  sets: WorkoutTemplateSet[];
+}
+
+export interface WorkoutTemplate {
+  id: string;
+  name: string;
+  entries: WorkoutTemplateEntry[];
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+  lastUsedAt?: string;
+}
+
 /** 記録中（下書き）のセット。完了チェックを持つ */
 export interface DraftSet {
   weightKg: number;

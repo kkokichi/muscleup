@@ -6,6 +6,7 @@ import { localRecordRepository } from "./local/localRecordRepository";
 import { localUserProfileRepository } from "./local/localUserProfileRepository";
 import { localCheckinRepository } from "./local/localCheckinRepository";
 import { localAdviceRepository } from "./local/localAdviceRepository";
+import { localWorkoutTemplateRepository } from "./local/localWorkoutTemplateRepository";
 
 export type * from "./interfaces";
 
@@ -14,6 +15,7 @@ const localRepositories: Repositories = {
   exercises: localExerciseRepository,
   records: localRecordRepository,
   userProfile: localUserProfileRepository,
+  workoutTemplates: localWorkoutTemplateRepository,
   checkins: localCheckinRepository,
   advice: localAdviceRepository,
 };

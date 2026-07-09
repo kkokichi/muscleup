@@ -22,4 +22,8 @@ export const localRecordRepository: RecordRepository = {
     records.push(record);
     writeStorage(KEY, records);
   },
+
+  async replaceAll(records) {
+    writeStorage(KEY, records);
+  },
 };

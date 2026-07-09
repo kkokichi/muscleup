@@ -18,6 +18,7 @@ import type {
   ExerciseRecord,
   UserProfile,
   WorkoutLog,
+  WorkoutTemplate,
 } from "@/types";
 import { SEED_EXERCISES } from "@/data/exercises";
 import { getDb, getUid } from "@/lib/firebase";
@@ -87,6 +88,16 @@ export function createFirestoreRepositories(): Repositories {
       async save(record) {
         await setDoc(doc(await userCol("records"), record.exerciseId), record);
       },
+      async replaceAll(records) {
+        const col = await userCol("records");
+        const snap = await getDocs(col);
+        await Promise.all(snap.docs.map((item) => deleteDoc(item.ref)));
+        await Promise.all(
+          records.map((record) =>
+            setDoc(doc(col, record.exerciseId), record),
+          ),
+        );
+      },
     },
 
     userProfile: {
@@ -106,6 +117,25 @@ export function createFirestoreRepositories(): Repositories {
         await setDoc(doc(getDb(), "users", await getUid()), profile, {
           merge: true,
         });
+      },
+    },
+
+    workoutTemplates: {
+      async getAll() {
+        const snap = await getDocs(
+          query(await userCol("workoutTemplates"), orderBy("updatedAt", "desc")),
+        );
+        return snap.docs.map((d) => d.data() as WorkoutTemplate);
+      },
+      async getById(id) {
+        const snap = await getDoc(doc(await userCol("workoutTemplates"), id));
+        return snap.exists() ? (snap.data() as WorkoutTemplate) : null;
+      },
+      async save(template) {
+        await setDoc(doc(await userCol("workoutTemplates"), template.id), template);
+      },
+      async delete(id) {
+        await deleteDoc(doc(await userCol("workoutTemplates"), id));
       },
     },
 

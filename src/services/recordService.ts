@@ -100,3 +100,43 @@ export function evaluatePbUpdates(
 
   return { updates, nextRecords };
 }
+
+export function rebuildRecordsFromLogs(
+  logs: WorkoutLog[],
+  existing: ExerciseRecord[] = [],
+): ExerciseRecord[] {
+  const previousCounts = new Map(existing.map((record) => [
+    record.exerciseId,
+    record.updatedCount,
+  ]));
+  const records = new Map<string, ExerciseRecord>();
+
+  for (const log of logs) {
+    for (const [exerciseId, summary] of summarizeLog(log)) {
+      if (summary.maxWeight <= 0) continue;
+      const prev = records.get(exerciseId);
+      const nextMaxWeight = Math.max(prev?.maxWeight ?? 0, summary.maxWeight);
+      const nextEst1rm = Math.max(prev?.est1rm ?? 0, summary.est1rm);
+      const nextMaxReps = Math.max(prev?.maxReps ?? 0, summary.maxReps);
+      const nextMaxVolume = Math.max(prev?.maxVolume ?? 0, summary.volume);
+      const changed =
+        !prev ||
+        nextMaxWeight !== prev.maxWeight ||
+        nextEst1rm !== prev.est1rm ||
+        nextMaxReps !== prev.maxReps ||
+        nextMaxVolume !== prev.maxVolume;
+      const next: ExerciseRecord = {
+        exerciseId,
+        maxWeight: nextMaxWeight,
+        est1rm: nextEst1rm,
+        maxReps: nextMaxReps,
+        maxVolume: nextMaxVolume,
+        achievedAt: changed ? log.date : prev.achievedAt,
+        updatedCount: previousCounts.get(exerciseId) ?? 0,
+      };
+      records.set(exerciseId, next);
+    }
+  }
+
+  return [...records.values()];
+}

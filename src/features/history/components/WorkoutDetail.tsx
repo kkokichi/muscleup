@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Trash2 } from "lucide-react";
+import { Clock, Pencil, Trash2 } from "lucide-react";
 import type { WorkoutLog } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getRepos } from "@/repositories";
 import { useExercises } from "@/hooks/useExercises";
+import { rebuildRecordsFromLogs } from "@/services/recordService";
 import { calcLogVolume } from "@/services/statsService";
 import { estimate1RM } from "@/services/oneRepMaxService";
 import { categoryNameJa } from "@/data/categories";
 import { formatDateJa } from "@/utils/date";
+import { WorkoutLogEditor } from "./WorkoutLogEditor";
 
 export function WorkoutDetail({ logId }: { logId: string }) {
   const router = useRouter();
@@ -21,6 +23,7 @@ export function WorkoutDetail({ logId }: { logId: string }) {
   const [log, setLog] = useState<WorkoutLog | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,6 +43,9 @@ export function WorkoutDetail({ logId }: { logId: string }) {
   const handleDelete = async () => {
     const repos = await getRepos();
     await repos.workoutLogs.delete(logId);
+    const logs = await repos.workoutLogs.getAll();
+    const existingRecords = await repos.records.getAll();
+    await repos.records.replaceAll(rebuildRecordsFromLogs(logs, existingRecords));
     router.push("/history");
   };
 
@@ -51,6 +57,22 @@ export function WorkoutDetail({ logId }: { logId: string }) {
       <p className="py-16 text-center text-sm text-muted-foreground">
         記録が見つかりませんでした
       </p>
+    );
+  }
+
+  if (isEditing) {
+    return (
+      <div>
+        <PageHeader title={formatDateJa(log.date)} subtitle="記録を編集" />
+        <WorkoutLogEditor
+          log={log}
+          onCancel={() => setIsEditing(false)}
+          onSaved={(nextLog) => {
+            setLog(nextLog);
+            setIsEditing(false);
+          }}
+        />
+      </div>
     );
   }
 
@@ -70,14 +92,24 @@ export function WorkoutDetail({ logId }: { logId: string }) {
               </Button>
             </div>
           ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="この記録を削除"
-              onClick={() => setConfirming(true)}
-            >
-              <Trash2 className="size-4 text-muted-foreground" />
-            </Button>
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="記録を編集"
+                onClick={() => setIsEditing(true)}
+              >
+                <Pencil className="size-4 text-muted-foreground" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="この記録を削除"
+                onClick={() => setConfirming(true)}
+              >
+                <Trash2 className="size-4 text-muted-foreground" />
+              </Button>
+            </div>
           )
         }
       />

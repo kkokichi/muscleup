@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { categoryNameJa } from "@/data/categories";
 import { useWorkoutDraftStore } from "@/stores/workoutDraftStore";
 import { useMascotStore } from "@/stores/mascotStore";
+import { useRestTimerStore } from "@/stores/restTimerStore";
 import { SetRow } from "./SetRow";
 
 interface ExerciseEntryCardProps {
@@ -25,11 +26,15 @@ export function ExerciseEntryCard({
   const { addSet, removeSet, updateSet, toggleSetDone, removeExercise } =
     useWorkoutDraftStore();
   const speak = useMascotStore((s) => s.speak);
+  const startRest = useRestTimerStore((s) => s.start);
 
   const handleToggleDone = (setIndex: number) => {
     const wasDone = entry.sets[setIndex]?.isDone;
     toggleSetDone(entry.exerciseId, setIndex);
-    if (!wasDone) speak("setDone");
+    if (!wasDone) {
+      startRest();
+      speak("setDone");
+    }
   };
 
   return (

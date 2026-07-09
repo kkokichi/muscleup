@@ -19,6 +19,8 @@ import { CheckinComposer } from "@/features/checkin/components/CheckinComposer";
 import { useSaveWorkout } from "../hooks/useSaveWorkout";
 import { ExerciseEntryCard } from "./ExerciseEntryCard";
 import { ExercisePickerSheet } from "./ExercisePickerSheet";
+import { RestTimerBar } from "./RestTimerBar";
+import { WorkoutTemplatePanel } from "./WorkoutTemplatePanel";
 
 /** 直近ログから種目の前回実績を引く（前回値プリセットの核） */
 function lastEntryFor(logs: WorkoutLog[], exerciseId: string): WorkoutEntry | null {
@@ -110,6 +112,9 @@ export function WorkoutRecorder() {
           チェックイン
         </button>
       </div>
+
+      <RestTimerBar />
+      <WorkoutTemplatePanel draft={draft} latestLog={logs[0]} />
 
       <div className="space-y-4">
         {draft.entries.map((entry, i) => {

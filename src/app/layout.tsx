@@ -2,10 +2,22 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 
+const basePath = process.env.GITHUB_PAGES === "true" ? "/muscleup" : "";
+
 export const metadata: Metadata = {
   title: "MuscleUp — ジムが楽しくなる筋トレ記録",
   description:
     "記録・成長・応援。AIマスコットと一緒に筋トレを続けられるワークアウトトラッカー",
+  applicationName: "MuscleUp",
+  appleWebApp: {
+    capable: true,
+    title: "MuscleUp",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: `${basePath}/muscleup-icon.svg`,
+    apple: `${basePath}/muscleup-icon.svg`,
+  },
 };
 
 export const viewport: Viewport = {

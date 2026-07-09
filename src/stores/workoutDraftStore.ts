@@ -1,11 +1,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { DraftSet, WorkoutDraft } from "@/types";
+import type { DraftSet, WorkoutDraft, WorkoutLog, WorkoutTemplate } from "@/types";
+import { templateSetsToDraftSets } from "@/services/templateService";
 import { todayISO } from "@/utils/date";
 
 interface WorkoutDraftState {
   draft: WorkoutDraft | null;
   startWorkout: () => void;
+  startFromTemplate: (template: WorkoutTemplate) => void;
+  startFromLog: (log: WorkoutLog) => void;
   addExercise: (exerciseId: string, presetSets?: DraftSet[]) => void;
   removeExercise: (exerciseId: string) => void;
   addSet: (exerciseId: string, preset?: Partial<DraftSet>) => void;
@@ -51,6 +54,39 @@ export const useWorkoutDraftStore = create<WorkoutDraftState>()(
             date: todayISO(),
             startedAt: new Date().toISOString(),
             entries: [],
+            note: "",
+          },
+        });
+      },
+
+      startFromTemplate: (template) => {
+        set({
+          draft: {
+            date: todayISO(),
+            startedAt: new Date().toISOString(),
+            entries: template.entries.map((entry) => ({
+              exerciseId: entry.exerciseId,
+              sets: templateSetsToDraftSets(entry.sets),
+            })),
+            note: template.note ?? "",
+          },
+        });
+      },
+
+      startFromLog: (log) => {
+        set({
+          draft: {
+            date: todayISO(),
+            startedAt: new Date().toISOString(),
+            entries: log.entries.map((entry) => ({
+              exerciseId: entry.exerciseId,
+              sets: entry.sets.map((workoutSet) => ({
+                weightKg: workoutSet.weightKg,
+                reps: workoutSet.reps,
+                ...(workoutSet.rpe !== undefined ? { rpe: workoutSet.rpe } : {}),
+                isDone: false,
+              })),
+            })),
             note: "",
           },
         });
