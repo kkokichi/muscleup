@@ -15,6 +15,8 @@ export interface ExerciseCategory {
   sortOrder: number;
 }
 
+import type { MuscleId } from "./muscle";
+
 export type Equipment =
   | "barbell"
   | "dumbbell"
@@ -29,7 +31,10 @@ export interface Exercise {
   nameEn: string;
   /** フォーム解説動画（YouTube） */
   youtubeUrl: string;
+  /** 表示用の効く部位（日本語ラベル） */
   targetMuscles: string[];
+  /** 部位マップでの絞り込みに使う筋肉ID。先頭ほど主働筋 */
+  muscles: MuscleId[];
   howTo: string[];
   cautions: string[];
   beginnerTips: string[];

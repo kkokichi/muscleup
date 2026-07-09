@@ -4,12 +4,17 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   orderBy,
   query,
   setDoc,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 import type {
+  Checkin,
   Exercise,
+  ExerciseAdvice,
   ExerciseRecord,
   UserProfile,
   WorkoutLog,
@@ -100,6 +105,48 @@ export function createFirestoreRepositories(): Repositories {
       async save(profile) {
         await setDoc(doc(getDb(), "users", await getUid()), profile, {
           merge: true,
+        });
+      },
+    },
+
+    // --- 共有コレクション（全ユーザー間） ---
+    checkins: {
+      async getAll() {
+        await getUid(); // 読み取りにも認証が必要
+        const snap = await getDocs(
+          query(collection(getDb(), "checkins"), orderBy("createdAt", "desc")),
+        );
+        return snap.docs.map((d) => d.data() as Checkin);
+      },
+      async create(checkin) {
+        await setDoc(doc(getDb(), "checkins", checkin.id), checkin);
+      },
+      async delete(id) {
+        await deleteDoc(doc(getDb(), "checkins", id));
+      },
+    },
+
+    advice: {
+      async getByExercise(exerciseId) {
+        await getUid();
+        const snap = await getDocs(
+          query(
+            collection(getDb(), "exerciseAdvice"),
+            where("exerciseId", "==", exerciseId),
+            orderBy("createdAt", "desc"),
+          ),
+        );
+        return snap.docs.map((d) => d.data() as ExerciseAdvice);
+      },
+      async create(advice) {
+        await setDoc(doc(getDb(), "exerciseAdvice", advice.id), advice);
+      },
+      async delete(id) {
+        await deleteDoc(doc(getDb(), "exerciseAdvice", id));
+      },
+      async updateLikes(id, delta) {
+        await updateDoc(doc(getDb(), "exerciseAdvice", id), {
+          likeCount: increment(delta),
         });
       },
     },

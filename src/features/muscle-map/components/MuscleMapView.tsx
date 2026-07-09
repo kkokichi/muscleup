@@ -4,33 +4,37 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
-import type { MuscleCategoryId } from "@/types";
+import type { MuscleId } from "@/types";
+import { getMuscle, muscleNameJa } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { useExercises } from "@/hooks/useExercises";
-import { categoryNameJa } from "@/data/categories";
 import { cn } from "@/lib/utils";
 import { BodyMapSvg, type BodyView } from "./BodyMapSvg";
 
 export function MuscleMapView() {
   const { exercises } = useExercises();
   const [view, setView] = useState<BodyView>("front");
-  const [selected, setSelected] = useState<MuscleCategoryId | null>(null);
+  const [selected, setSelected] = useState<MuscleId | null>(null);
 
-  const selectedExercises = useMemo(
-    () => (selected ? exercises.filter((e) => e.categoryId === selected) : []),
-    [exercises, selected],
-  );
+  /** 選択筋肉を主働筋にする種目を先頭に、補助的に効く種目を後ろに並べる */
+  const matched = useMemo(() => {
+    if (!selected) return [];
+    return exercises
+      .filter((e) => e.muscles.includes(selected))
+      .sort(
+        (a, b) => a.muscles.indexOf(selected) - b.muscles.indexOf(selected),
+      );
+  }, [exercises, selected]);
 
   const handleViewChange = (next: BodyView) => {
     setView(next);
     setSelected(null);
   };
 
+  const selectedCategory = selected ? getMuscle(selected)?.categoryId : null;
+
   return (
     <div>
-      <PageHeader title="部位マップ" subtitle="鍛えたい部位をタップ" />
-
       <div className="mb-4 flex justify-center gap-1 rounded-full bg-secondary p-1">
         {(["front", "back"] as const).map((v) => (
           <button
@@ -52,7 +56,7 @@ export function MuscleMapView() {
       <BodyMapSvg view={view} selected={selected} onSelect={setSelected} />
 
       <AnimatePresence mode="wait">
-        {selected && (
+        {selected ? (
           <motion.section
             key={selected}
             initial={{ opacity: 0, y: 16 }}
@@ -63,21 +67,23 @@ export function MuscleMapView() {
           >
             <div className="mb-2 flex items-center justify-between">
               <h2 className="text-sm font-bold">
-                {categoryNameJa(selected)}の種目
+                {muscleNameJa(selected)}の種目
                 <span className="ml-2 text-xs font-normal text-muted-foreground">
-                  {selectedExercises.length}件
+                  {matched.length}件
                 </span>
               </h2>
-              <Link
-                href={`/exercises?category=${selected}`}
-                className="flex items-center text-xs font-medium text-primary"
-              >
-                辞典で見る
-                <ChevronRight className="size-3.5" />
-              </Link>
+              {selectedCategory && (
+                <Link
+                  href={`/exercises?category=${selectedCategory}`}
+                  className="flex items-center text-xs font-medium text-primary"
+                >
+                  辞典で見る
+                  <ChevronRight className="size-3.5" />
+                </Link>
+              )}
             </div>
             <div className="space-y-2">
-              {selectedExercises.map((e) => (
+              {matched.map((e) => (
                 <Link key={e.id} href={`/exercises/${e.id}`} className="block">
                   <Card className="border-border bg-card transition-colors active:bg-secondary/50">
                     <CardContent className="flex items-center justify-between p-3.5">
@@ -92,16 +98,19 @@ export function MuscleMapView() {
                   </Card>
                 </Link>
               ))}
+              {matched.length === 0 && (
+                <p className="py-6 text-center text-xs text-muted-foreground">
+                  この筋肉の種目はまだ登録されていません
+                </p>
+              )}
             </div>
           </motion.section>
+        ) : (
+          <p className="mt-5 text-center text-xs text-muted-foreground">
+            イラストの筋肉をタップすると種目一覧が表示されます
+          </p>
         )}
       </AnimatePresence>
-
-      {!selected && (
-        <p className="mt-5 text-center text-xs text-muted-foreground">
-          イラストの光る部位をタップすると種目一覧が表示されます
-        </p>
-      )}
     </div>
   );
 }

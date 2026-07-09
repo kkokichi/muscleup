@@ -1,5 +1,7 @@
 import type {
+  Checkin,
   Exercise,
+  ExerciseAdvice,
   ExerciseRecord,
   MuscleCategoryId,
   UserProfile,
@@ -35,9 +37,29 @@ export interface UserProfileRepository {
   save(profile: UserProfile): Promise<void>;
 }
 
+/** ジムチェックイン（共有） */
+export interface CheckinRepository {
+  /** 新しい順 */
+  getAll(): Promise<Checkin[]>;
+  create(checkin: Checkin): Promise<void>;
+  delete(id: string): Promise<void>;
+}
+
+/** 種目アドバイス（共有） */
+export interface AdviceRepository {
+  /** 種目ごと、新しい順 */
+  getByExercise(exerciseId: string): Promise<ExerciseAdvice[]>;
+  create(advice: ExerciseAdvice): Promise<void>;
+  delete(id: string): Promise<void>;
+  /** いいね数を delta（+1 / -1）だけ増減する */
+  updateLikes(id: string, delta: number): Promise<void>;
+}
+
 export interface Repositories {
   workoutLogs: WorkoutLogRepository;
   exercises: ExerciseRepository;
   records: RecordRepository;
   userProfile: UserProfileRepository;
+  checkins: CheckinRepository;
+  advice: AdviceRepository;
 }

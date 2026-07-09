@@ -8,6 +8,7 @@ export const CHEST_EXERCISES: Exercise[] = [
     nameEn: "Bench Press",
     youtubeUrl: "https://www.youtube.com/results?search_query=ベンチプレス+フォーム+初心者",
     targetMuscles: ["大胸筋", "三角筋前部", "上腕三頭筋"],
+    muscles: ["chest-mid", "chest-lower", "front-delt", "triceps"],
     equipment: "barbell",
     isCustom: false,
     howTo: [
@@ -40,6 +41,7 @@ export const CHEST_EXERCISES: Exercise[] = [
     youtubeUrl:
       "https://www.youtube.com/results?search_query=インクラインダンベルプレス+フォーム",
     targetMuscles: ["大胸筋上部", "三角筋前部", "上腕三頭筋"],
+    muscles: ["chest-upper", "front-delt", "triceps"],
     equipment: "dumbbell",
     isCustom: false,
     howTo: [
@@ -71,6 +73,7 @@ export const CHEST_EXERCISES: Exercise[] = [
     nameEn: "Dumbbell Fly",
     youtubeUrl: "https://www.youtube.com/results?search_query=ダンベルフライ+フォーム",
     targetMuscles: ["大胸筋（内側・ストレッチ）"],
+    muscles: ["chest-mid", "chest-upper"],
     equipment: "dumbbell",
     isCustom: false,
     howTo: [
@@ -102,6 +105,7 @@ export const CHEST_EXERCISES: Exercise[] = [
     nameEn: "Push-Up",
     youtubeUrl: "https://www.youtube.com/results?search_query=腕立て伏せ+正しいフォーム",
     targetMuscles: ["大胸筋", "上腕三頭筋", "体幹"],
+    muscles: ["chest-mid", "chest-lower", "triceps", "front-delt"],
     equipment: "bodyweight",
     isCustom: false,
     howTo: [
@@ -124,6 +128,70 @@ export const CHEST_EXERCISES: Exercise[] = [
       "可動域が浅い「首振り腕立て」",
       "肘が真横に開きすぎて肩を痛める",
       "体幹が抜けて腰が落ちる",
+    ],
+  },
+  {
+    id: "chest-dip",
+    categoryId: "chest",
+    nameJa: "ディップス",
+    nameEn: "Chest Dip",
+    youtubeUrl: "https://www.youtube.com/results?search_query=ディップス+大胸筋+フォーム",
+    targetMuscles: ["大胸筋下部", "上腕三頭筋", "三角筋前部"],
+    muscles: ["chest-lower", "triceps", "front-delt"],
+    equipment: "bodyweight",
+    isCustom: false,
+    howTo: [
+      "平行バーを握り、体を持ち上げてスタート",
+      "上体をやや前傾させ、胸を張る",
+      "肘を曲げながら体を下ろし、胸のストレッチを感じる",
+      "大胸筋下部で押し上げて戻る",
+    ],
+    cautions: [
+      "肩を下げすぎない（深すぎる可動域は肩を痛める）",
+      "上体を立てると三頭筋メインになる（胸狙いは前傾）",
+      "反動を使って弾まない",
+    ],
+    beginnerTips: [
+      "できない場合はアシストマシンやバンドを使う",
+      "前傾を保つほど大胸筋下部に効く",
+      "肘は軽く外に、体は前傾のフォームを固める",
+    ],
+    commonMistakes: [
+      "体を立てすぎて胸に効かない",
+      "下ろしが浅い / 深すぎる",
+      "肩がすくんで首に力が入る",
+    ],
+  },
+  {
+    id: "cable-crossover",
+    categoryId: "chest",
+    nameJa: "ケーブルクロスオーバー",
+    nameEn: "Cable Crossover",
+    youtubeUrl: "https://www.youtube.com/results?search_query=ケーブルクロスオーバー+フォーム",
+    targetMuscles: ["大胸筋（内側）", "大胸筋下部"],
+    muscles: ["chest-mid", "chest-lower"],
+    equipment: "cable",
+    isCustom: false,
+    howTo: [
+      "左右のケーブルを高い位置にセットし、両手にグリップを持つ",
+      "片足を前に出し、上体をやや前傾する",
+      "肘を軽く曲げたまま、弧を描いて手を体の前で寄せる",
+      "大胸筋の収縮を感じたらゆっくり戻す",
+    ],
+    cautions: [
+      "肘を伸ばしきって腕の力で引かない",
+      "重量より軌道と収縮を優先",
+      "肩が前に出て丸まらないように",
+    ],
+    beginnerTips: [
+      "仕上げ（フィニッシュ）種目として最適",
+      "手を合わせる高さで効く部位が変わる（下=下部、水平=中部）",
+      "1〜2秒キープして絞ると効果的",
+    ],
+    commonMistakes: [
+      "重量が重すぎてプレス動作になる",
+      "肘の角度が動いてしまう",
+      "上体が起きて負荷が抜ける",
     ],
   },
 ];

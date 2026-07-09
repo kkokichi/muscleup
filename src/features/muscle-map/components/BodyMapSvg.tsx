@@ -1,166 +1,142 @@
 "use client";
 
-import type { MuscleCategoryId } from "@/types";
+import type { MuscleId } from "@/types";
+import { muscleNameJa } from "@/types";
+import { BACK_REGIONS, FRONT_REGIONS, type Shape } from "../bodyRegions";
 
 export type BodyView = "front" | "back";
 
 interface BodyMapSvgProps {
   view: BodyView;
-  selected: MuscleCategoryId | null;
-  onSelect: (category: MuscleCategoryId) => void;
+  selected: MuscleId | null;
+  onSelect: (muscle: MuscleId) => void;
 }
 
-const BASE = "#1e1e21";
-const REGION = "#3a3a40";
+const SILHOUETTE = "#1c1c20";
+const OUTLINE = "#2f2f35";
+const REGION = "#41414a";
 const ACTIVE = "#bfff00";
 
-interface RegionProps {
-  category: MuscleCategoryId;
-  selected: MuscleCategoryId | null;
-  onSelect: (category: MuscleCategoryId) => void;
-  children: (fill: string) => React.ReactNode;
-  label: string;
+function renderShape(shape: Shape, fill: string, key: number) {
+  switch (shape.t) {
+    case "rect":
+      return (
+        <rect
+          key={key}
+          x={shape.x}
+          y={shape.y}
+          width={shape.w}
+          height={shape.h}
+          rx={shape.rx}
+          fill={fill}
+        />
+      );
+    case "ellipse":
+      return (
+        <ellipse
+          key={key}
+          cx={shape.cx}
+          cy={shape.cy}
+          rx={shape.rx}
+          ry={shape.ry}
+          fill={fill}
+        />
+      );
+    case "path":
+      return <path key={key} d={shape.d} fill={fill} />;
+  }
 }
 
-/** タップ可能な筋肉部位。選択中はアクセント色で発光する */
-function Region({ category, selected, onSelect, children, label }: RegionProps) {
-  const isActive = selected === category;
-  return (
-    <g
-      role="button"
-      aria-label={label}
-      tabIndex={0}
-      onClick={() => onSelect(category)}
-      onKeyDown={(e) => e.key === "Enter" && onSelect(category)}
-      style={{ cursor: "pointer" }}
-      filter={isActive ? "url(#glow)" : undefined}
-      opacity={selected && !isActive ? 0.55 : 1}
-    >
-      {children(isActive ? ACTIVE : REGION)}
-    </g>
-  );
-}
-
-/** 体のベースシルエット（前面・背面共通） */
+/** 前面・背面共通の体シルエット（人体は左右対称なので同一） */
 function Silhouette() {
   return (
-    <g fill={BASE} stroke="#2a2a2e" strokeWidth="1">
-      <circle cx="100" cy="28" r="18" />
-      <rect x="91" y="43" width="18" height="12" rx="4" />
-      <rect x="60" y="53" width="80" height="135" rx="24" />
-      <rect x="34" y="62" width="24" height="118" rx="12" />
-      <rect x="142" y="62" width="24" height="118" rx="12" />
-      <rect x="65" y="185" width="31" height="142" rx="15" />
-      <rect x="104" y="185" width="31" height="142" rx="15" />
+    <g fill={SILHOUETTE} stroke={OUTLINE} strokeWidth="1.5">
+      {/* 頭・首 */}
+      <ellipse cx="120" cy="34" rx="19" ry="22" />
+      <rect x="112" y="52" width="16" height="14" rx="5" />
+      {/* 肩・胴 */}
+      <ellipse cx="82" cy="82" rx="17" ry="16" />
+      <ellipse cx="158" cy="82" rx="17" ry="16" />
+      <path d="M88 74 Q120 66 152 74 L150 150 Q148 186 138 196 L102 196 Q92 186 90 150 Z" />
+      {/* 上腕・前腕・手 */}
+      <rect x="59" y="84" width="18" height="54" rx="9" />
+      <rect x="163" y="84" width="18" height="54" rx="9" />
+      <rect x="56" y="132" width="16" height="52" rx="8" />
+      <rect x="168" y="132" width="16" height="52" rx="8" />
+      <ellipse cx="64" cy="190" rx="9" ry="11" />
+      <ellipse cx="176" cy="190" rx="9" ry="11" />
+      {/* 骨盤・脚 */}
+      <path d="M96 188 L144 188 Q150 198 146 214 L94 214 Q90 198 96 188 Z" />
+      <rect x="92" y="210" width="24" height="96" rx="12" />
+      <rect x="124" y="210" width="24" height="96" rx="12" />
+      <rect x="95" y="300" width="20" height="90" rx="10" />
+      <rect x="125" y="300" width="20" height="90" rx="10" />
+      <ellipse cx="105" cy="394" rx="12" ry="7" />
+      <ellipse cx="135" cy="394" rx="12" ry="7" />
     </g>
   );
 }
 
 export function BodyMapSvg({ view, selected, onSelect }: BodyMapSvgProps) {
-  const region = (category: MuscleCategoryId, label: string) => ({
-    category,
-    selected,
-    onSelect,
-    label,
-  });
+  const regions = view === "front" ? FRONT_REGIONS : BACK_REGIONS;
+  const entries = Object.entries(regions) as [MuscleId, Shape[]][];
 
   return (
     <svg
-      viewBox="0 0 200 340"
-      className="mx-auto h-auto w-full max-w-60"
+      viewBox="0 0 240 410"
+      className="mx-auto h-auto w-full max-w-[280px]"
       role="group"
       aria-label={view === "front" ? "体の前面マップ" : "体の背面マップ"}
     >
       <defs>
-        <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-          <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor={ACTIVE} floodOpacity="0.6" />
+        <filter id="muscle-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow
+            dx="0"
+            dy="0"
+            stdDeviation="4"
+            floodColor={ACTIVE}
+            floodOpacity="0.7"
+          />
         </filter>
       </defs>
 
       <Silhouette />
 
-      {view === "front" ? (
-        <>
-          <Region {...region("shoulders", "肩")}>
-            {(fill) => (
-              <>
-                <circle cx="66" cy="68" r="12" fill={fill} />
-                <circle cx="134" cy="68" r="12" fill={fill} />
-              </>
+      {entries.map(([muscleId, shapes]) => {
+        const isActive = selected === muscleId;
+        return (
+          <g
+            key={muscleId}
+            role="button"
+            aria-label={muscleNameJa(muscleId)}
+            aria-pressed={isActive}
+            tabIndex={0}
+            onClick={() => onSelect(muscleId)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect(muscleId);
+              }
+            }}
+            style={{ cursor: "pointer" }}
+            filter={isActive ? "url(#muscle-glow)" : undefined}
+            opacity={selected && !isActive ? 0.5 : 1}
+          >
+            {shapes.map((shape, i) =>
+              renderShape(shape, isActive ? ACTIVE : REGION, i),
             )}
-          </Region>
-          <Region {...region("chest", "胸")}>
-            {(fill) => (
-              <>
-                <rect x="70" y="76" width="27" height="26" rx="9" fill={fill} />
-                <rect x="103" y="76" width="27" height="26" rx="9" fill={fill} />
-              </>
-            )}
-          </Region>
-          <Region {...region("arms", "腕")}>
-            {(fill) => (
-              <>
-                <rect x="37" y="88" width="18" height="46" rx="9" fill={fill} />
-                <rect x="145" y="88" width="18" height="46" rx="9" fill={fill} />
-              </>
-            )}
-          </Region>
-          <Region {...region("core", "腹筋")}>
-            {(fill) => (
-              <g>
-                <rect x="80" y="108" width="40" height="66" rx="10" fill={fill} />
-                <line x1="100" y1="112" x2="100" y2="170" stroke={BASE} strokeWidth="2" />
-                <line x1="82" y1="128" x2="118" y2="128" stroke={BASE} strokeWidth="2" />
-                <line x1="82" y1="148" x2="118" y2="148" stroke={BASE} strokeWidth="2" />
+
+            {/* 腹直筋のシックスパック表現 */}
+            {muscleId === "abs" && (
+              <g stroke={SILHOUETTE} strokeWidth="2" opacity={isActive ? 0.5 : 0.7}>
+                <line x1="120" y1="130" x2="120" y2="182" />
+                <line x1="107" y1="146" x2="133" y2="146" />
+                <line x1="107" y1="162" x2="133" y2="162" />
               </g>
             )}
-          </Region>
-          <Region {...region("legs", "脚")}>
-            {(fill) => (
-              <>
-                <rect x="68" y="192" width="26" height="92" rx="13" fill={fill} />
-                <rect x="106" y="192" width="26" height="92" rx="13" fill={fill} />
-              </>
-            )}
-          </Region>
-        </>
-      ) : (
-        <>
-          <Region {...region("shoulders", "肩（後部）")}>
-            {(fill) => (
-              <>
-                <circle cx="66" cy="68" r="12" fill={fill} />
-                <circle cx="134" cy="68" r="12" fill={fill} />
-              </>
-            )}
-          </Region>
-          <Region {...region("back", "背中")}>
-            {(fill) => (
-              <path
-                d="M 74 62 L 126 62 Q 130 62 129 68 L 124 118 Q 116 152 100 158 Q 84 152 76 118 L 71 68 Q 70 62 74 62 Z"
-                fill={fill}
-              />
-            )}
-          </Region>
-          <Region {...region("arms", "腕（三頭筋）")}>
-            {(fill) => (
-              <>
-                <rect x="37" y="88" width="18" height="46" rx="9" fill={fill} />
-                <rect x="145" y="88" width="18" height="46" rx="9" fill={fill} />
-              </>
-            )}
-          </Region>
-          <Region {...region("legs", "脚（もも裏・お尻）")}>
-            {(fill) => (
-              <>
-                <rect x="74" y="162" width="52" height="26" rx="12" fill={fill} />
-                <rect x="68" y="194" width="26" height="88" rx="13" fill={fill} />
-                <rect x="106" y="194" width="26" height="88" rx="13" fill={fill} />
-              </>
-            )}
-          </Region>
-        </>
-      )}
+          </g>
+        );
+      })}
     </svg>
   );
 }

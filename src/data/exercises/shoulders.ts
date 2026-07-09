@@ -9,6 +9,7 @@ export const SHOULDER_EXERCISES: Exercise[] = [
     youtubeUrl:
       "https://www.youtube.com/results?search_query=オーバーヘッドプレス+フォーム",
     targetMuscles: ["三角筋前部・中部", "上腕三頭筋", "体幹"],
+    muscles: ["front-delt", "side-delt", "triceps"],
     equipment: "barbell",
     isCustom: false,
     howTo: [
@@ -41,6 +42,7 @@ export const SHOULDER_EXERCISES: Exercise[] = [
     youtubeUrl:
       "https://www.youtube.com/results?search_query=ダンベルショルダープレス+フォーム",
     targetMuscles: ["三角筋前部・中部", "上腕三頭筋"],
+    muscles: ["front-delt", "side-delt", "triceps"],
     equipment: "dumbbell",
     isCustom: false,
     howTo: [
@@ -72,6 +74,7 @@ export const SHOULDER_EXERCISES: Exercise[] = [
     nameEn: "Side Lateral Raise",
     youtubeUrl: "https://www.youtube.com/results?search_query=サイドレイズ+フォーム",
     targetMuscles: ["三角筋中部"],
+    muscles: ["side-delt"],
     equipment: "dumbbell",
     isCustom: false,
     howTo: [
@@ -103,6 +106,7 @@ export const SHOULDER_EXERCISES: Exercise[] = [
     nameEn: "Rear Delt Fly",
     youtubeUrl: "https://www.youtube.com/results?search_query=リアデルトフライ+リアレイズ+フォーム",
     targetMuscles: ["三角筋後部", "僧帽筋中部"],
+    muscles: ["rear-delt", "traps"],
     equipment: "dumbbell",
     isCustom: false,
     howTo: [

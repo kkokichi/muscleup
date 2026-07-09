@@ -8,6 +8,7 @@ export const CORE_EXERCISES: Exercise[] = [
     nameEn: "Plank",
     youtubeUrl: "https://www.youtube.com/results?search_query=プランク+正しいフォーム",
     targetMuscles: ["腹直筋", "腹横筋", "体幹全体"],
+    muscles: ["abs", "obliques"],
     equipment: "bodyweight",
     isCustom: false,
     howTo: [
@@ -39,6 +40,7 @@ export const CORE_EXERCISES: Exercise[] = [
     nameEn: "Crunch",
     youtubeUrl: "https://www.youtube.com/results?search_query=クランチ+腹筋+フォーム",
     targetMuscles: ["腹直筋上部"],
+    muscles: ["abs"],
     equipment: "bodyweight",
     isCustom: false,
     howTo: [
@@ -70,6 +72,7 @@ export const CORE_EXERCISES: Exercise[] = [
     nameEn: "Leg Raise",
     youtubeUrl: "https://www.youtube.com/results?search_query=レッグレイズ+フォーム",
     targetMuscles: ["腹直筋下部", "腸腰筋"],
+    muscles: ["abs"],
     equipment: "bodyweight",
     isCustom: false,
     howTo: [
@@ -101,6 +104,7 @@ export const CORE_EXERCISES: Exercise[] = [
     nameEn: "Ab Wheel Rollout",
     youtubeUrl: "https://www.youtube.com/results?search_query=アブローラー+膝コロ+フォーム",
     targetMuscles: ["腹直筋", "腹斜筋", "広背筋"],
+    muscles: ["abs", "obliques"],
     equipment: "bodyweight",
     isCustom: false,
     howTo: [
@@ -123,6 +127,38 @@ export const CORE_EXERCISES: Exercise[] = [
       "腰が反って「エビ反り」になる",
       "腕の力だけで戻す",
       "可動域を伸ばしすぎて潰れる",
+    ],
+  },
+  {
+    id: "russian-twist",
+    categoryId: "core",
+    nameJa: "ロシアンツイスト",
+    nameEn: "Russian Twist",
+    youtubeUrl: "https://www.youtube.com/results?search_query=ロシアンツイスト+腹斜筋+フォーム",
+    targetMuscles: ["腹斜筋", "腹直筋"],
+    muscles: ["obliques", "abs"],
+    equipment: "bodyweight",
+    isCustom: false,
+    howTo: [
+      "座って膝を曲げ、上体を少し後ろに倒す",
+      "手（またはダンベル・プレート）を胸の前で持つ",
+      "体幹をひねって左右交互に手を床の横へ動かす",
+      "呼吸を続けながらリズムよく繰り返す",
+    ],
+    cautions: [
+      "腰を丸めない・反らせない（体幹で支える）",
+      "首や腕だけでひねらない",
+      "速すぎるとフォームが崩れる",
+    ],
+    beginnerTips: [
+      "きつければ足を床につけてOK",
+      "くびれ・脇腹に効く種目",
+      "ひねりきった位置で1瞬止めると効く",
+    ],
+    commonMistakes: [
+      "腕だけ動いて体幹がひねれていない",
+      "反動任せで速く振るだけ",
+      "腰が丸まって負荷が腰にかかる",
     ],
   },
 ];

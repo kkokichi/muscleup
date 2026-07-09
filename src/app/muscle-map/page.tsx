@@ -1,5 +1,5 @@
-import { MuscleMapView } from "@/features/muscle-map/components/MuscleMapView";
+import { MapScreen } from "@/features/map/components/MapScreen";
 
-export default function MuscleMapPage() {
-  return <MuscleMapView />;
+export default function MapPage() {
+  return <MapScreen />;
 }

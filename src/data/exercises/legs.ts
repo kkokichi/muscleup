@@ -8,6 +8,7 @@ export const LEG_EXERCISES: Exercise[] = [
     nameEn: "Squat",
     youtubeUrl: "https://www.youtube.com/results?search_query=バーベルスクワット+フォーム+初心者",
     targetMuscles: ["大腿四頭筋", "臀筋", "ハムストリングス", "体幹"],
+    muscles: ["quads", "glutes", "hamstrings"],
     equipment: "barbell",
     isCustom: false,
     howTo: [
@@ -39,6 +40,7 @@ export const LEG_EXERCISES: Exercise[] = [
     nameEn: "Leg Press",
     youtubeUrl: "https://www.youtube.com/results?search_query=レッグプレス+フォーム",
     targetMuscles: ["大腿四頭筋", "臀筋", "ハムストリングス"],
+    muscles: ["quads", "glutes", "hamstrings"],
     equipment: "machine",
     isCustom: false,
     howTo: [
@@ -70,6 +72,7 @@ export const LEG_EXERCISES: Exercise[] = [
     nameEn: "Lunge",
     youtubeUrl: "https://www.youtube.com/results?search_query=ランジ+フォーム+お尻",
     targetMuscles: ["臀筋", "大腿四頭筋", "ハムストリングス"],
+    muscles: ["glutes", "quads", "hamstrings"],
     equipment: "dumbbell",
     isCustom: false,
     howTo: [
@@ -102,6 +105,7 @@ export const LEG_EXERCISES: Exercise[] = [
     youtubeUrl:
       "https://www.youtube.com/results?search_query=ルーマニアンデッドリフト+フォーム",
     targetMuscles: ["ハムストリングス", "臀筋", "脊柱起立筋"],
+    muscles: ["hamstrings", "glutes", "lower-back"],
     equipment: "barbell",
     isCustom: false,
     howTo: [
@@ -124,6 +128,70 @@ export const LEG_EXERCISES: Exercise[] = [
       "膝を曲げすぎて通常のデッドリフトになる",
       "背中が丸まる",
       "上体だけお辞儀してお尻が動いていない",
+    ],
+  },
+  {
+    id: "calf-raise",
+    categoryId: "legs",
+    nameJa: "カーフレイズ",
+    nameEn: "Calf Raise",
+    youtubeUrl: "https://www.youtube.com/results?search_query=カーフレイズ+ふくらはぎ+フォーム",
+    targetMuscles: ["下腿三頭筋（腓腹筋・ヒラメ筋）"],
+    muscles: ["calves"],
+    equipment: "machine",
+    isCustom: false,
+    howTo: [
+      "つま先を台に乗せ、かかとを下げてストレッチする",
+      "かかとを最大まで押し上げてつま先立ちになる",
+      "頂点でふくらはぎを1秒締める",
+      "かかとをゆっくり下ろして伸ばす",
+    ],
+    cautions: [
+      "反動で弾まない",
+      "膝を曲げすぎない（腓腹筋狙いは膝を伸ばす）",
+      "可動域を最大に使う",
+    ],
+    beginnerTips: [
+      "ダンベルを片手に持って片脚ずつでもOK",
+      "高回数（15〜20回）で追い込む部位",
+      "下げ切り・上げ切りを丁寧に",
+    ],
+    commonMistakes: [
+      "可動域が狭くちょこちょこ動く",
+      "反動で跳ねる",
+      "上げ切りで収縮していない",
+    ],
+  },
+  {
+    id: "hip-thrust",
+    categoryId: "legs",
+    nameJa: "ヒップスラスト",
+    nameEn: "Hip Thrust",
+    youtubeUrl: "https://www.youtube.com/results?search_query=ヒップスラスト+お尻+フォーム",
+    targetMuscles: ["臀筋", "ハムストリングス"],
+    muscles: ["glutes", "hamstrings"],
+    equipment: "barbell",
+    isCustom: false,
+    howTo: [
+      "ベンチに肩甲骨を乗せ、バーを股関節に置く",
+      "足を肩幅に開き、膝を90度に",
+      "かかとで床を押し、お尻を天井に向けて突き上げる",
+      "頂点で臀筋を締め、ゆっくり下ろす",
+    ],
+    cautions: [
+      "腰を反らせて上げない（お尻で上げる）",
+      "顎を引いて視線は前方〜斜め上",
+      "バーは股関節の骨に当たるのでパッドを使う",
+    ],
+    beginnerTips: [
+      "お尻を集中的に鍛える最強種目のひとつ",
+      "まずは自重やバーのみでフォームを固める",
+      "頂点で「お尻でクルミを割る」意識",
+    ],
+    commonMistakes: [
+      "腰を反らせて腰で上げる",
+      "可動域が狭い（上げ切らない）",
+      "かかとが浮いてつま先重心になる",
     ],
   },
 ];

@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { getRepos } from "@/repositories";
 import { categoryNameJa } from "@/data/categories";
 import { useWorkoutDraftStore } from "@/stores/workoutDraftStore";
+import { ExerciseAdviceSection } from "./ExerciseAdviceSection";
 
 function Section({
   icon,
@@ -137,6 +138,8 @@ export function ExerciseDetail({ exerciseId }: { exerciseId: string }) {
           title="よくある失敗"
           items={exercise.commonMistakes}
         />
+
+        <ExerciseAdviceSection exerciseId={exercise.id} />
 
         <Button size="lg" className="w-full" onClick={handleRecord}>
           <Dumbbell className="size-4" data-icon="inline-start" />

@@ -8,6 +8,7 @@ export const ARM_EXERCISES: Exercise[] = [
     nameEn: "Barbell Curl",
     youtubeUrl: "https://www.youtube.com/results?search_query=バーベルカール+フォーム",
     targetMuscles: ["上腕二頭筋"],
+    muscles: ["biceps"],
     equipment: "barbell",
     isCustom: false,
     howTo: [
@@ -39,6 +40,7 @@ export const ARM_EXERCISES: Exercise[] = [
     nameEn: "Hammer Curl",
     youtubeUrl: "https://www.youtube.com/results?search_query=ハンマーカール+フォーム",
     targetMuscles: ["上腕筋", "腕橈骨筋", "上腕二頭筋"],
+    muscles: ["biceps", "forearms"],
     equipment: "dumbbell",
     isCustom: false,
     howTo: [
@@ -70,6 +72,7 @@ export const ARM_EXERCISES: Exercise[] = [
     nameEn: "Triceps Pushdown",
     youtubeUrl: "https://www.youtube.com/results?search_query=プレスダウン+三頭筋+フォーム",
     targetMuscles: ["上腕三頭筋"],
+    muscles: ["triceps"],
     equipment: "cable",
     isCustom: false,
     howTo: [
@@ -102,6 +105,7 @@ export const ARM_EXERCISES: Exercise[] = [
     youtubeUrl:
       "https://www.youtube.com/results?search_query=スカルクラッシャー+フォーム",
     targetMuscles: ["上腕三頭筋（長頭）"],
+    muscles: ["triceps"],
     equipment: "barbell",
     isCustom: false,
     howTo: [
@@ -124,6 +128,38 @@ export const ARM_EXERCISES: Exercise[] = [
       "肘が動いてプレス種目になる",
       "額に真っ直ぐ下ろして肘に負担",
       "重すぎてコントロール不能",
+    ],
+  },
+  {
+    id: "wrist-curl",
+    categoryId: "arms",
+    nameJa: "リストカール",
+    nameEn: "Wrist Curl",
+    youtubeUrl: "https://www.youtube.com/results?search_query=リストカール+前腕+フォーム",
+    targetMuscles: ["前腕屈筋群"],
+    muscles: ["forearms"],
+    equipment: "dumbbell",
+    isCustom: false,
+    howTo: [
+      "ベンチに座り、前腕を太ももに乗せて手首を膝の外に出す",
+      "手のひらを上に向けてダンベルを握る",
+      "手首だけを丸めるように巻き上げる",
+      "ゆっくり手首を伸ばして戻す",
+    ],
+    cautions: [
+      "腕全体を動かさない（手首だけ）",
+      "重すぎる重量は腱を痛める",
+      "手首の可動域いっぱいを使う",
+    ],
+    beginnerTips: [
+      "握力・前腕の太さアップに効果的",
+      "高回数（15〜20回）で効かせる",
+      "手の甲を上にすると前腕伸筋も鍛えられる（リバースリストカール）",
+    ],
+    commonMistakes: [
+      "腕ごと持ち上げてしまう",
+      "可動域が狭い",
+      "重すぎてチートになる",
     ],
   },
 ];

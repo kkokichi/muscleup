@@ -54,3 +54,24 @@ export async function getUid(): Promise<string> {
   const credential = await signInAnonymously(auth);
   return credential.user.uid;
 }
+
+/**
+ * Firebase設定時は匿名UID、未設定時は端末固有の擬似IDを返す。
+ * コミュニティ投稿の author 識別に使う。
+ */
+export async function getAuthorId(): Promise<string> {
+  if (isFirebaseConfigured()) return getUid();
+  return getLocalDeviceId();
+}
+
+const LOCAL_DEVICE_KEY = "muscleup:v1:deviceId";
+
+function getLocalDeviceId(): string {
+  if (typeof window === "undefined") return "local";
+  let id = window.localStorage.getItem(LOCAL_DEVICE_KEY);
+  if (!id) {
+    id = `local-${Math.random().toString(36).slice(2, 10)}`;
+    window.localStorage.setItem(LOCAL_DEVICE_KEY, id);
+  }
+  return id;
+}

@@ -4,6 +4,8 @@ import { localWorkoutLogRepository } from "./local/localWorkoutLogRepository";
 import { localExerciseRepository } from "./local/localExerciseRepository";
 import { localRecordRepository } from "./local/localRecordRepository";
 import { localUserProfileRepository } from "./local/localUserProfileRepository";
+import { localCheckinRepository } from "./local/localCheckinRepository";
+import { localAdviceRepository } from "./local/localAdviceRepository";
 
 export type * from "./interfaces";
 
@@ -12,6 +14,8 @@ const localRepositories: Repositories = {
   exercises: localExerciseRepository,
   records: localRecordRepository,
   userProfile: localUserProfileRepository,
+  checkins: localCheckinRepository,
+  advice: localAdviceRepository,
 };
 
 let reposPromise: Promise<Repositories> | null = null;

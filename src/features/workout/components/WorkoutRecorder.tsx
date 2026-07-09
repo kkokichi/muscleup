@@ -2,16 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Plus } from "lucide-react";
-import type { DraftSet, WorkoutEntry, WorkoutLog } from "@/types";
+import { Clock, MapPin, Plus } from "lucide-react";
+import type { CheckinDraft, DraftSet, WorkoutEntry, WorkoutLog } from "@/types";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FadeIn } from "@/components/common/FadeIn";
 import { useHasMounted } from "@/hooks/useHasMounted";
 import { useExercises } from "@/hooks/useExercises";
 import { useWorkoutLogs } from "@/hooks/useWorkoutLogs";
+import { useUserName } from "@/hooks/useUserName";
 import { useWorkoutDraftStore } from "@/stores/workoutDraftStore";
+import { useMascotStore } from "@/stores/mascotStore";
 import { formatDateJa, minutesSince } from "@/utils/date";
+import { useCheckins } from "@/features/checkin/hooks/useCheckins";
+import { CheckinComposer } from "@/features/checkin/components/CheckinComposer";
 import { useSaveWorkout } from "../hooks/useSaveWorkout";
 import { ExerciseEntryCard } from "./ExerciseEntryCard";
 import { ExercisePickerSheet } from "./ExercisePickerSheet";
@@ -32,7 +36,11 @@ export function WorkoutRecorder() {
   const { exercises, byId } = useExercises();
   const { logs } = useWorkoutLogs();
   const { saveWorkout, isSaving } = useSaveWorkout(byId);
+  const { name, saveName } = useUserName();
+  const { addCheckin } = useCheckins();
+  const speak = useMascotStore((s) => s.speak);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [checkinOpen, setCheckinOpen] = useState(false);
   // 経過時間は描画のたびに算出し、インターバルで再描画だけを促す
   const [, setTick] = useState(0);
 
@@ -88,9 +96,19 @@ export function WorkoutRecorder() {
         }
       />
 
-      <div className="mb-4 flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Clock className="size-3.5" />
-        <span className="tabular-nums">経過 {elapsed}分</span>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Clock className="size-3.5" />
+          <span className="tabular-nums">経過 {elapsed}分</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setCheckinOpen(true)}
+          className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground transition-colors active:bg-secondary/70"
+        >
+          <MapPin className="size-3.5 text-primary" />
+          チェックイン
+        </button>
       </div>
 
       <div className="space-y-4">
@@ -136,6 +154,17 @@ export function WorkoutRecorder() {
         excludeIds={draft.entries.map((e) => e.exerciseId)}
         onSelect={(e) => handleSelectExercise(e.id)}
         onClose={() => setPickerOpen(false)}
+      />
+
+      <CheckinComposer
+        open={checkinOpen}
+        initialName={name}
+        onClose={() => setCheckinOpen(false)}
+        onSubmit={async (checkinDraft: CheckinDraft, authorName: string) => {
+          await saveName(authorName);
+          await addCheckin(checkinDraft, authorName);
+          speak("greeting");
+        }}
       />
     </div>
   );

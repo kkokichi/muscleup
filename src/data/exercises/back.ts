@@ -8,6 +8,7 @@ export const BACK_EXERCISES: Exercise[] = [
     nameEn: "Deadlift",
     youtubeUrl: "https://www.youtube.com/results?search_query=デッドリフト+フォーム+初心者",
     targetMuscles: ["脊柱起立筋", "広背筋", "僧帽筋", "ハムストリングス", "臀筋"],
+    muscles: ["lower-back", "lats", "traps", "hamstrings", "glutes"],
     equipment: "barbell",
     isCustom: false,
     howTo: [
@@ -39,6 +40,7 @@ export const BACK_EXERCISES: Exercise[] = [
     nameEn: "Pull-Up",
     youtubeUrl: "https://www.youtube.com/results?search_query=懸垂+広背筋+フォーム",
     targetMuscles: ["広背筋", "大円筋", "上腕二頭筋"],
+    muscles: ["lats", "biceps"],
     equipment: "bodyweight",
     isCustom: false,
     howTo: [
@@ -70,6 +72,7 @@ export const BACK_EXERCISES: Exercise[] = [
     nameEn: "Lat Pulldown",
     youtubeUrl: "https://www.youtube.com/results?search_query=ラットプルダウン+フォーム",
     targetMuscles: ["広背筋", "大円筋", "上腕二頭筋"],
+    muscles: ["lats", "biceps"],
     equipment: "machine",
     isCustom: false,
     howTo: [
@@ -101,6 +104,7 @@ export const BACK_EXERCISES: Exercise[] = [
     nameEn: "Bent-Over Row",
     youtubeUrl: "https://www.youtube.com/results?search_query=ベントオーバーロウ+フォーム",
     targetMuscles: ["広背筋", "僧帽筋中部", "菱形筋"],
+    muscles: ["lats", "traps"],
     equipment: "barbell",
     isCustom: false,
     howTo: [
@@ -123,6 +127,38 @@ export const BACK_EXERCISES: Exercise[] = [
       "反動で上体を振って引く",
       "引く位置が胸寄りで僧帽筋上部ばかりに効く",
       "前傾が浅くシュラッグ化する",
+    ],
+  },
+  {
+    id: "shrug",
+    categoryId: "back",
+    nameJa: "シュラッグ",
+    nameEn: "Shrug",
+    youtubeUrl: "https://www.youtube.com/results?search_query=シュラッグ+僧帽筋+フォーム",
+    targetMuscles: ["僧帽筋上部"],
+    muscles: ["traps"],
+    equipment: "dumbbell",
+    isCustom: false,
+    howTo: [
+      "ダンベルを体の横に持って直立する",
+      "肩をすくめるように、まっすぐ上に引き上げる",
+      "頂点で僧帽筋を1秒締める",
+      "ゆっくり肩を下ろす",
+    ],
+    cautions: [
+      "肩を回さない（首・肩を痛める原因）",
+      "腕で引かず、肩の上下だけで動かす",
+      "顎を引いて姿勢を保つ",
+    ],
+    beginnerTips: [
+      "首まわり・肩の盛り上がりを作る種目",
+      "「耳に肩を近づける」イメージ",
+      "重量より収縮重視で12〜15回",
+    ],
+    commonMistakes: [
+      "肩をぐるぐる回してしまう",
+      "腕を曲げて引き上げる",
+      "可動域が狭い",
     ],
   },
 ];
