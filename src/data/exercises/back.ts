@@ -1,0 +1,128 @@
+import type { Exercise } from "@/types";
+
+export const BACK_EXERCISES: Exercise[] = [
+  {
+    id: "deadlift",
+    categoryId: "back",
+    nameJa: "デッドリフト",
+    nameEn: "Deadlift",
+    youtubeUrl: "https://www.youtube.com/results?search_query=デッドリフト+フォーム+初心者",
+    targetMuscles: ["脊柱起立筋", "広背筋", "僧帽筋", "ハムストリングス", "臀筋"],
+    equipment: "barbell",
+    isCustom: false,
+    howTo: [
+      "バーの真下に足の中心が来るように立つ（足幅は腰幅）",
+      "股関節から曲げてバーを握る（肩幅より少し広め）",
+      "胸を張り背中をまっすぐにしてから、床を押すように立ち上がる",
+      "バーは体に沿わせたまま、直立したら股関節から下ろす",
+    ],
+    cautions: [
+      "背中を丸めない（最重要。腰椎損傷のリスク）",
+      "バーを体から離さない",
+      "腰に不安がある日は無理をしない",
+    ],
+    beginnerTips: [
+      "最初は軽い重量で「背中フラット」を体に覚えさせる",
+      "動画で自分のフォームを撮影して確認する",
+      "呼吸は「下で吸って止め、上げ切って吐く」",
+    ],
+    commonMistakes: [
+      "腰から先に上がって背中が丸まる",
+      "バーが前に流れて腰に負担がかかる",
+      "上げ切りで腰を反らせすぎる",
+    ],
+  },
+  {
+    id: "pull-up",
+    categoryId: "back",
+    nameJa: "懸垂（チンニング）",
+    nameEn: "Pull-Up",
+    youtubeUrl: "https://www.youtube.com/results?search_query=懸垂+広背筋+フォーム",
+    targetMuscles: ["広背筋", "大円筋", "上腕二頭筋"],
+    equipment: "bodyweight",
+    isCustom: false,
+    howTo: [
+      "肩幅より広めにバーを順手で握る",
+      "肩甲骨を下げて胸を張る（ぶら下がりで脱力しない）",
+      "胸をバーに近づけるイメージで引き上げる",
+      "顎がバーを越えたら、ゆっくり下ろす",
+    ],
+    cautions: [
+      "反動（キッピング）を使わない",
+      "下ろすときに肩が抜けるまで脱力しない",
+      "肩に痛みがある場合は斜め懸垂に切り替える",
+    ],
+    beginnerTips: [
+      "できない場合はネガティブ懸垂（飛びついてゆっくり下りる）から",
+      "ゴムバンドやマシンのアシストを活用",
+      "「肘を腰に引きつける」と背中に効きやすい",
+    ],
+    commonMistakes: [
+      "腕だけで引いて背中に効かない",
+      "可動域が狭い（顎が上がらない/下ろしが浅い）",
+      "体が前後に振れて反動頼みになる",
+    ],
+  },
+  {
+    id: "lat-pulldown",
+    categoryId: "back",
+    nameJa: "ラットプルダウン",
+    nameEn: "Lat Pulldown",
+    youtubeUrl: "https://www.youtube.com/results?search_query=ラットプルダウン+フォーム",
+    targetMuscles: ["広背筋", "大円筋", "上腕二頭筋"],
+    equipment: "machine",
+    isCustom: false,
+    howTo: [
+      "パッドに太ももを固定し、肩幅より広めにバーを握る",
+      "胸を張り、軽く上体を後ろに傾ける",
+      "肘を下に引くイメージで、バーを鎖骨に向けて引く",
+      "肩甲骨の伸びを感じながらゆっくり戻す",
+    ],
+    cautions: [
+      "首の後ろに下ろさない（肩を痛めやすい）",
+      "上体を倒しすぎてローイングにしない",
+      "手首を巻き込まない",
+    ],
+    beginnerTips: [
+      "懸垂の練習として最適。まずは10〜12回できる重さで",
+      "「脇をしめる」意識で広背筋に入る",
+      "サムレスグリップにすると腕の関与が減る",
+    ],
+    commonMistakes: [
+      "反動で体を大きく倒して引く",
+      "腕の力だけで引いてしまう",
+      "戻しが速く、負荷が抜けている",
+    ],
+  },
+  {
+    id: "bent-over-row",
+    categoryId: "back",
+    nameJa: "ベントオーバーロウ",
+    nameEn: "Bent-Over Row",
+    youtubeUrl: "https://www.youtube.com/results?search_query=ベントオーバーロウ+フォーム",
+    targetMuscles: ["広背筋", "僧帽筋中部", "菱形筋"],
+    equipment: "barbell",
+    isCustom: false,
+    howTo: [
+      "肩幅でバーを握り、膝を軽く曲げる",
+      "背中をまっすぐ保ったまま上体を45度前傾",
+      "へそに向かってバーを引き上げる",
+      "肩甲骨を寄せ切ったら、ゆっくり下ろす",
+    ],
+    cautions: [
+      "背中を丸めない（デッドリフト同様、腰に注意）",
+      "上体の角度を保つ（起き上がってこない）",
+      "重すぎる重量で可動域を削らない",
+    ],
+    beginnerTips: [
+      "鏡で横からフォームを確認する",
+      "「肘で天井を引く」イメージが効く",
+      "腰が不安ならチェストサポート付きマシンでも代用可",
+    ],
+    commonMistakes: [
+      "反動で上体を振って引く",
+      "引く位置が胸寄りで僧帽筋上部ばかりに効く",
+      "前傾が浅くシュラッグ化する",
+    ],
+  },
+];

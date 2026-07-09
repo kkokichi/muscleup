@@ -1,0 +1,128 @@
+import type { Exercise } from "@/types";
+
+export const CORE_EXERCISES: Exercise[] = [
+  {
+    id: "plank",
+    categoryId: "core",
+    nameJa: "プランク",
+    nameEn: "Plank",
+    youtubeUrl: "https://www.youtube.com/results?search_query=プランク+正しいフォーム",
+    targetMuscles: ["腹直筋", "腹横筋", "体幹全体"],
+    equipment: "bodyweight",
+    isCustom: false,
+    howTo: [
+      "うつ伏せから肘とつま先で体を支える",
+      "頭からかかとまで一直線をキープ",
+      "お腹を薄くへこませる意識で呼吸を続ける",
+      "30〜60秒キープを目安に",
+    ],
+    cautions: [
+      "腰を反らせない（腰痛の原因）",
+      "お尻を高く上げすぎない",
+      "呼吸を止めない",
+    ],
+    beginnerTips: [
+      "まずは20秒から。フォームが崩れたら終了",
+      "鏡や動画で一直線を確認",
+      "回数ではなく「姿勢の質」を重視（重量欄は0kgでOK、回数欄に秒数を記録）",
+    ],
+    commonMistakes: [
+      "腰が落ちて反り腰になる",
+      "お尻が上がって「山」になる",
+      "首だけ上げて頸椎に負担",
+    ],
+  },
+  {
+    id: "crunch",
+    categoryId: "core",
+    nameJa: "クランチ",
+    nameEn: "Crunch",
+    youtubeUrl: "https://www.youtube.com/results?search_query=クランチ+腹筋+フォーム",
+    targetMuscles: ["腹直筋上部"],
+    equipment: "bodyweight",
+    isCustom: false,
+    howTo: [
+      "仰向けで膝を90度に曲げる",
+      "手は胸の前か頭に軽く添える",
+      "おへそを覗き込むように肩甲骨を床から浮かせる",
+      "ゆっくり戻す（頭は床につけない）",
+    ],
+    cautions: [
+      "首を手で引っ張らない",
+      "上体を起こしすぎない（シットアップとは別種目）",
+      "反動を使わない",
+    ],
+    beginnerTips: [
+      "「背中を丸める」動きであって「起き上がる」動きではない",
+      "息を吐きながら丸めると収縮が強まる",
+      "15〜20回×3セットから",
+    ],
+    commonMistakes: [
+      "首だけ曲げて腹筋に効いていない",
+      "勢いで起き上がる",
+      "戻しで完全に脱力する",
+    ],
+  },
+  {
+    id: "leg-raise",
+    categoryId: "core",
+    nameJa: "レッグレイズ",
+    nameEn: "Leg Raise",
+    youtubeUrl: "https://www.youtube.com/results?search_query=レッグレイズ+フォーム",
+    targetMuscles: ["腹直筋下部", "腸腰筋"],
+    equipment: "bodyweight",
+    isCustom: false,
+    howTo: [
+      "仰向けになり、手をお尻の横か下に置く",
+      "脚を揃えて伸ばしたまま持ち上げる",
+      "垂直まで上げたら、床すれすれまでゆっくり下ろす",
+      "床につけずに繰り返す",
+    ],
+    cautions: [
+      "腰が浮く/反る場合は膝を曲げて負荷を下げる",
+      "反動で振り上げない",
+      "腰痛持ちは無理をしない",
+    ],
+    beginnerTips: [
+      "きつければ膝を曲げた「ニーレイズ」から",
+      "下ろすときこそゆっくり（ネガティブ重視）",
+      "腰の下に手を敷くと腰が守られる",
+    ],
+    commonMistakes: [
+      "下ろすときに腰が反る",
+      "可動域が狭く上だけで往復する",
+      "勢いだけの高速反復",
+    ],
+  },
+  {
+    id: "ab-rollout",
+    categoryId: "core",
+    nameJa: "アブローラー（膝コロ）",
+    nameEn: "Ab Wheel Rollout",
+    youtubeUrl: "https://www.youtube.com/results?search_query=アブローラー+膝コロ+フォーム",
+    targetMuscles: ["腹直筋", "腹斜筋", "広背筋"],
+    equipment: "bodyweight",
+    isCustom: false,
+    howTo: [
+      "膝立ちでローラーを肩の真下に置く",
+      "背中を軽く丸めたまま、前方へ転がす",
+      "限界の一歩手前で止める",
+      "腹筋で引き戻す",
+    ],
+    cautions: [
+      "腰を反らせた瞬間に腰を痛める。絶対に反らせない",
+      "最初から立ちコロに挑戦しない",
+      "戻れる範囲だけ転がす",
+    ],
+    beginnerTips: [
+      "壁に向かって行うと転がりすぎを防げる",
+      "腹筋への負荷は最強クラス。週2回でも十分",
+      "翌日の筋肉痛は勲章ッス",
+    ],
+    commonMistakes: [
+      "腰が反って「エビ反り」になる",
+      "腕の力だけで戻す",
+      "可動域を伸ばしすぎて潰れる",
+    ],
+  },
+];

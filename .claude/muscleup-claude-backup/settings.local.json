@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(node -v)",
+      "PowerShell(npm -v)",
+      "PowerShell(git init)",
+      "PowerShell(git remote add origin https://github.com/kkokichi/muscleup.git)"
+    ]
+  }
+}

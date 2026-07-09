@@ -1,0 +1,129 @@
+import type { Exercise } from "@/types";
+
+export const CHEST_EXERCISES: Exercise[] = [
+  {
+    id: "bench-press",
+    categoryId: "chest",
+    nameJa: "ベンチプレス",
+    nameEn: "Bench Press",
+    youtubeUrl: "https://www.youtube.com/results?search_query=ベンチプレス+フォーム+初心者",
+    targetMuscles: ["大胸筋", "三角筋前部", "上腕三頭筋"],
+    equipment: "barbell",
+    isCustom: false,
+    howTo: [
+      "ベンチに仰向けになり、肩甲骨を寄せて胸を張る",
+      "肩幅の1.5倍程度でバーを握り、ラックから外す",
+      "胸の下部（乳頭ライン）に向けてゆっくり下ろす",
+      "バーが胸に軽く触れたら、力強く押し上げる",
+    ],
+    cautions: [
+      "手首を反らせすぎない（バーは手のひらの根元に乗せる）",
+      "お尻をベンチから浮かせない",
+      "限界重量に挑むときは必ずセーフティバーかスポッターを",
+    ],
+    beginnerTips: [
+      "まずはバーだけ(20kg)でフォームを固める",
+      "足裏全体を床につけて踏ん張ると安定する",
+      "下ろす2秒・上げる1秒のテンポを意識",
+    ],
+    commonMistakes: [
+      "肩甲骨を寄せずに肩がすくむ → 肩を痛める原因",
+      "バウンドさせて胸で弾ませる",
+      "手幅が広すぎて可動域が狭くなる",
+    ],
+  },
+  {
+    id: "incline-dumbbell-press",
+    categoryId: "chest",
+    nameJa: "インクラインダンベルプレス",
+    nameEn: "Incline Dumbbell Press",
+    youtubeUrl:
+      "https://www.youtube.com/results?search_query=インクラインダンベルプレス+フォーム",
+    targetMuscles: ["大胸筋上部", "三角筋前部", "上腕三頭筋"],
+    equipment: "dumbbell",
+    isCustom: false,
+    howTo: [
+      "ベンチを30〜45度に設定して座る",
+      "ダンベルを太ももに乗せ、反動を使って構える",
+      "胸を張ったまま、乳頭より少し上に向けて下ろす",
+      "胸の上部を意識して押し上げ、頂点で軽く寄せる",
+    ],
+    cautions: [
+      "角度を上げすぎると肩に効いてしまう（45度まで）",
+      "肘を真横に開きすぎない",
+      "重すぎるダンベルで可動域を犠牲にしない",
+    ],
+    beginnerTips: [
+      "フラットのベンチプレスより軽い重量から始める",
+      "ダンベルは「ハ」の字に構えると肩に優しい",
+      "下ろす位置は毎回同じに保つ",
+    ],
+    commonMistakes: [
+      "腰を反らせてフラットプレス化してしまう",
+      "頂点でダンベル同士を強くぶつける",
+      "下ろしが浅く可動域が半分になっている",
+    ],
+  },
+  {
+    id: "dumbbell-fly",
+    categoryId: "chest",
+    nameJa: "ダンベルフライ",
+    nameEn: "Dumbbell Fly",
+    youtubeUrl: "https://www.youtube.com/results?search_query=ダンベルフライ+フォーム",
+    targetMuscles: ["大胸筋（内側・ストレッチ）"],
+    equipment: "dumbbell",
+    isCustom: false,
+    howTo: [
+      "ベンチに仰向けになり、ダンベルを胸の上で合わせる",
+      "肘を軽く曲げたまま、弧を描くように横へ開く",
+      "胸のストレッチを感じる位置まで下ろす",
+      "大胸筋で抱きしめるように閉じる",
+    ],
+    cautions: [
+      "肘を伸ばしきらない（肘関節への負担大）",
+      "深く下ろしすぎて肩を痛めない",
+      "プレス系より軽い重量で行う",
+    ],
+    beginnerTips: [
+      "「大きな木を抱える」イメージで動かす",
+      "重量より胸の伸び感を最優先",
+      "8〜15回できる重さで丁寧に",
+    ],
+    commonMistakes: [
+      "プレスのように肘を曲げて押してしまう",
+      "重量が重すぎて反動を使う",
+      "閉じるときに肩がすくむ",
+    ],
+  },
+  {
+    id: "push-up",
+    categoryId: "chest",
+    nameJa: "プッシュアップ（腕立て伏せ）",
+    nameEn: "Push-Up",
+    youtubeUrl: "https://www.youtube.com/results?search_query=腕立て伏せ+正しいフォーム",
+    targetMuscles: ["大胸筋", "上腕三頭筋", "体幹"],
+    equipment: "bodyweight",
+    isCustom: false,
+    howTo: [
+      "手を肩幅より少し広めに置き、頭からかかとまで一直線に",
+      "肘を斜め後ろに曲げながら胸を床に近づける",
+      "胸が床すれすれまで下りたら押し上げる",
+      "体幹を固めたまま繰り返す",
+    ],
+    cautions: [
+      "腰を反らせない・お尻を上げない",
+      "首だけ下げて回数を稼がない",
+      "手首が痛い場合はプッシュアップバーを使う",
+    ],
+    beginnerTips: [
+      "きつい場合は膝つきから始めてOK",
+      "1回1回、胸の伸縮を感じるスピードで",
+      "自宅トレの王様。毎日の習慣づけに最適",
+    ],
+    commonMistakes: [
+      "可動域が浅い「首振り腕立て」",
+      "肘が真横に開きすぎて肩を痛める",
+      "体幹が抜けて腰が落ちる",
+    ],
+  },
+];

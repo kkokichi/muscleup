@@ -1,0 +1,129 @@
+import type { Exercise } from "@/types";
+
+export const ARM_EXERCISES: Exercise[] = [
+  {
+    id: "barbell-curl",
+    categoryId: "arms",
+    nameJa: "バーベルカール",
+    nameEn: "Barbell Curl",
+    youtubeUrl: "https://www.youtube.com/results?search_query=バーベルカール+フォーム",
+    targetMuscles: ["上腕二頭筋"],
+    equipment: "barbell",
+    isCustom: false,
+    howTo: [
+      "肩幅で逆手（アンダーグリップ）にバーを握る",
+      "肘を体側に固定する",
+      "前腕だけを動かしてバーを巻き上げる",
+      "力こぶの収縮を感じたら、ゆっくり下ろす",
+    ],
+    cautions: [
+      "腰を反らせて反動を使わない",
+      "肘を前に出さない（肩の関与が増える）",
+      "手首を巻き込まない",
+    ],
+    beginnerTips: [
+      "反動なしで10回できる重量が適正",
+      "下ろす動作（ネガティブ）を3秒かけると効果大",
+      "手首が痛い場合はEZバーを使う",
+    ],
+    commonMistakes: [
+      "体を揺らして振り上げる「チーティングカール」",
+      "下ろしが速く負荷が抜ける",
+      "肘が動いてショルダーフロント化する",
+    ],
+  },
+  {
+    id: "hammer-curl",
+    categoryId: "arms",
+    nameJa: "ハンマーカール",
+    nameEn: "Hammer Curl",
+    youtubeUrl: "https://www.youtube.com/results?search_query=ハンマーカール+フォーム",
+    targetMuscles: ["上腕筋", "腕橈骨筋", "上腕二頭筋"],
+    equipment: "dumbbell",
+    isCustom: false,
+    howTo: [
+      "手のひらを内側に向けてダンベルを持つ（縦持ち）",
+      "肘を体側に固定する",
+      "縦のままダンベルを巻き上げる",
+      "ゆっくりコントロールして下ろす",
+    ],
+    cautions: [
+      "肩をすくめない",
+      "反動を使わない",
+      "左右同時でも交互でもOKだが、フォームは崩さない",
+    ],
+    beginnerTips: [
+      "腕の厚み（横幅）を作るのに効果的な種目",
+      "通常のカールより少し重い重量を扱える",
+      "前腕も同時に鍛えられて握力アップにも",
+    ],
+    commonMistakes: [
+      "体の反動で振り上げる",
+      "可動域が半分（下ろし切らない）",
+      "手首が曲がってしまう",
+    ],
+  },
+  {
+    id: "triceps-pushdown",
+    categoryId: "arms",
+    nameJa: "トライセプスプレスダウン",
+    nameEn: "Triceps Pushdown",
+    youtubeUrl: "https://www.youtube.com/results?search_query=プレスダウン+三頭筋+フォーム",
+    targetMuscles: ["上腕三頭筋"],
+    equipment: "cable",
+    isCustom: false,
+    howTo: [
+      "ケーブルマシンのバーを肩幅で順手に握る",
+      "肘を体側に固定し、少し前傾する",
+      "肘を支点に、バーを真下へ押し下げる",
+      "肘が伸び切ったら三頭筋を絞り、ゆっくり戻す",
+    ],
+    cautions: [
+      "肘を開かない・動かさない",
+      "体重をかけて押さない",
+      "肩がすくまないように",
+    ],
+    beginnerTips: [
+      "三頭筋種目の入門に最適。ピンで重量調整も簡単",
+      "ロープアタッチメントだと絞り込みやすい",
+      "12〜15回できる重さで収縮を感じる",
+    ],
+    commonMistakes: [
+      "重すぎて上体全体で押している",
+      "肘が前後に動いて背中や肩に逃げる",
+      "戻しが速く負荷が抜ける",
+    ],
+  },
+  {
+    id: "skull-crusher",
+    categoryId: "arms",
+    nameJa: "スカルクラッシャー",
+    nameEn: "Skull Crusher",
+    youtubeUrl:
+      "https://www.youtube.com/results?search_query=スカルクラッシャー+フォーム",
+    targetMuscles: ["上腕三頭筋（長頭）"],
+    equipment: "barbell",
+    isCustom: false,
+    howTo: [
+      "ベンチに仰向けになり、EZバーを肩幅より狭く握る",
+      "腕を頭上方向に少し傾けて構える",
+      "肘を支点に、額の後ろへゆっくり下ろす",
+      "三頭筋で押し戻す",
+    ],
+    cautions: [
+      "名前の通り顔に落とすと危険。重量は控えめに",
+      "肘を開かない",
+      "肘が痛む場合は中止してプレスダウンに変更",
+    ],
+    beginnerTips: [
+      "EZバーを使うと手首・肘に優しい",
+      "頭の少し後ろに下ろすと長頭がストレッチされる",
+      "セーフティとしてスポッターがいると安心",
+    ],
+    commonMistakes: [
+      "肘が動いてプレス種目になる",
+      "額に真っ直ぐ下ろして肘に負担",
+      "重すぎてコントロール不能",
+    ],
+  },
+];
