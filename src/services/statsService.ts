@@ -138,3 +138,40 @@ export function calcLogVolume(log: WorkoutLog): number {
 export function calcLogSetCount(log: WorkoutLog): number {
   return log.entries.reduce((sum, e) => sum + e.sets.length, 0);
 }
+
+export interface DayActivity {
+  sets: number;
+  volume: number;
+  count: number;
+}
+
+/** 日付(YYYY-MM-DD)ごとの活動量。同日に複数セッションがあれば合算する */
+export function buildActivityByDate(logs: WorkoutLog[]): Map<string, DayActivity> {
+  const map = new Map<string, DayActivity>();
+  for (const log of logs) {
+    const prev = map.get(log.date) ?? { sets: 0, volume: 0, count: 0 };
+    map.set(log.date, {
+      sets: prev.sets + calcLogSetCount(log),
+      volume: prev.volume + calcLogVolume(log),
+      count: prev.count + 1,
+    });
+  }
+  return map;
+}
+
+/** これまでの最長連続トレーニング日数 */
+export function calcLongestStreak(logs: WorkoutLog[]): number {
+  const dates = [...new Set(logs.map((l) => l.date))].sort();
+  if (dates.length === 0) return 0;
+  let longest = 1;
+  let current = 1;
+  for (let i = 1; i < dates.length; i++) {
+    if (diffDays(dates[i], dates[i - 1]) === 1) {
+      current++;
+      longest = Math.max(longest, current);
+    } else {
+      current = 1;
+    }
+  }
+  return longest;
+}

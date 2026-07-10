@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
+import { Settings } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FadeIn } from "@/components/common/FadeIn";
 import { useHasMounted } from "@/hooks/useHasMounted";
@@ -15,6 +17,18 @@ import { StatsGrid } from "./StatsGrid";
 import { WeeklyCard } from "./WeeklyCard";
 import { TodayPlanCard } from "./TodayPlanCard";
 import { RecentWorkoutsList } from "./RecentWorkoutsList";
+import { ReminderNudge } from "./ReminderNudge";
+import { HomeQuickLinks } from "./HomeQuickLinks";
+
+const settingsAction = (
+  <Link
+    href="/settings"
+    aria-label="設定"
+    className="flex size-9 items-center justify-center rounded-full bg-card text-muted-foreground transition-colors active:bg-secondary"
+  >
+    <Settings className="size-5" />
+  </Link>
+);
 
 export function HomeDashboard() {
   const mounted = useHasMounted();
@@ -34,7 +48,11 @@ export function HomeDashboard() {
   if (!mounted || isLoading) {
     return (
       <div>
-        <PageHeader title="MuscleUp" subtitle={formatDateJa(todayISO())} />
+        <PageHeader
+          title="MuscleUp"
+          subtitle={formatDateJa(todayISO())}
+          action={settingsAction}
+        />
         <div className="h-28 animate-pulse rounded-2xl bg-card" />
       </div>
     );
@@ -42,7 +60,11 @@ export function HomeDashboard() {
 
   return (
     <div>
-      <PageHeader title="MuscleUp" subtitle={formatDateJa(todayISO())} />
+      <PageHeader
+        title="MuscleUp"
+        subtitle={formatDateJa(todayISO())}
+        action={settingsAction}
+      />
       <div className="space-y-4">
         <FadeIn>
           <MascotGreetingCard
@@ -51,6 +73,7 @@ export function HomeDashboard() {
             weeklyCount={stats.weekly.count}
           />
         </FadeIn>
+        <ReminderNudge trainedToday={stats.trainedToday} />
         <FadeIn delay={0.05}>
           <TodayPlanCard
             suggestedCategoryId={suggestedCategoryId}
@@ -66,9 +89,12 @@ export function HomeDashboard() {
           />
         </FadeIn>
         <FadeIn delay={0.15}>
-          <WeeklyCard weekly={stats.weekly} />
+          <HomeQuickLinks />
         </FadeIn>
         <FadeIn delay={0.2}>
+          <WeeklyCard weekly={stats.weekly} />
+        </FadeIn>
+        <FadeIn delay={0.25}>
           <RecentWorkoutsList logs={stats.recentLogs} exerciseById={byId} />
         </FadeIn>
       </div>

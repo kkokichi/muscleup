@@ -16,12 +16,16 @@ import { Mascot } from "@/features/mascot/components/Mascot";
 import { cn } from "@/lib/utils";
 import { WeightChart } from "./WeightChart";
 import { StatSummaryRow } from "./StatSummaryRow";
+import { MuscleBalanceView } from "./MuscleBalanceView";
+
+type ProgressMode = "exercise" | "muscle";
 
 export function ProgressView() {
   const mounted = useHasMounted();
   const { logs, isLoading } = useWorkoutLogs();
   const { records } = useRecords();
   const { byId } = useExercises();
+  const [mode, setMode] = useState<ProgressMode>("exercise");
   const [userSelectedId, setSelectedId] = useState<string | null>(null);
 
   /** 記録のある種目のみ（最近やった順） */
@@ -75,42 +79,71 @@ export function ProgressView() {
     <div>
       <PageHeader title="進捗" subtitle="成長の記録" />
 
-      <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1">
-        {trainedIds.map((id) => (
+      <div className="mb-5 flex gap-1 rounded-full bg-secondary p-1">
+        {(
+          [
+            ["exercise", "種目別"],
+            ["muscle", "部位別"],
+          ] as const
+        ).map(([value, label]) => (
           <button
-            key={id}
+            key={value}
             type="button"
-            onClick={() => setSelectedId(id)}
+            onClick={() => setMode(value)}
             className={cn(
-              "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors",
-              id === selectedId
+              "flex-1 rounded-full py-2 text-sm font-semibold transition-colors",
+              mode === value
                 ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-foreground",
+                : "text-muted-foreground",
             )}
           >
-            {byId.get(id)?.nameJa ?? id}
+            {label}
           </button>
         ))}
       </div>
 
-      <div className="space-y-4">
-        <FadeIn>
-          <StatSummaryRow record={record} monthlyGrowth={monthlyGrowth} />
-        </FadeIn>
-        <FadeIn delay={0.05}>
-          <Card className="border-border bg-card">
-            <CardContent className="p-3 pt-4">
-              {series.length >= 2 ? (
-                <WeightChart series={series} />
-              ) : (
-                <p className="py-16 text-center text-xs text-muted-foreground">
-                  グラフ表示には2回以上の記録が必要です
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </FadeIn>
-      </div>
+      {mode === "muscle" ? (
+        <MuscleBalanceView logs={logs} />
+      ) : (
+        <>
+          <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1">
+            {trainedIds.map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setSelectedId(id)}
+                className={cn(
+                  "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors",
+                  id === selectedId
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-foreground",
+                )}
+              >
+                {byId.get(id)?.nameJa ?? id}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            <FadeIn>
+              <StatSummaryRow record={record} monthlyGrowth={monthlyGrowth} />
+            </FadeIn>
+            <FadeIn delay={0.05}>
+              <Card className="border-border bg-card">
+                <CardContent className="p-3 pt-4">
+                  {series.length >= 2 ? (
+                    <WeightChart series={series} />
+                  ) : (
+                    <p className="py-16 text-center text-xs text-muted-foreground">
+                      グラフ表示には2回以上の記録が必要です
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </FadeIn>
+          </div>
+        </>
+      )}
     </div>
   );
 }

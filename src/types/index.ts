@@ -5,3 +5,5 @@ export * from "./record";
 export * from "./user";
 export * from "./mascot";
 export * from "./community";
+export * from "./body";
+export * from "./achievement";
