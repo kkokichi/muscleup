@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Exercise } from "@/types";
 import { getRepos } from "@/repositories";
 
@@ -8,6 +8,13 @@ import { getRepos } from "@/repositories";
 export function useExercises() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const reload = useCallback(async () => {
+    const repos = await getRepos();
+    const list = await repos.exercises.getAll();
+    setExercises(list);
+    return list;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,5 +36,5 @@ export function useExercises() {
     [exercises],
   );
 
-  return { exercises, byId, isLoading };
+  return { exercises, byId, isLoading, reload };
 }

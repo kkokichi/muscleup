@@ -74,6 +74,9 @@ export function createFirestoreRepositories(): Repositories {
           isCustom: true,
         });
       },
+      async deleteCustom(id) {
+        await deleteDoc(doc(await userCol("customExercises"), id));
+      },
     },
 
     records: {

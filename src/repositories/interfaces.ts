@@ -24,6 +24,8 @@ export interface ExerciseRepository {
   getById(id: string): Promise<Exercise | null>;
   getByCategory(categoryId: MuscleCategoryId): Promise<Exercise[]>;
   saveCustom(exercise: Exercise): Promise<void>;
+  /** カスタム種目を削除する（シード種目は削除できない） */
+  deleteCustom(id: string): Promise<void>;
 }
 
 export interface RecordRepository {
