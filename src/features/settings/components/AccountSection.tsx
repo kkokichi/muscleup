@@ -1,39 +1,93 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { LogIn, LogOut, UserCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { signInWithGoogle, signOutUser } from "@/lib/firebase";
+import {
+  authErrorCode,
+  getGoogleRedirectResult,
+  isPopupUnsupportedError,
+  signInWithGoogle,
+  signInWithGoogleRedirect,
+  signOutUser,
+} from "@/lib/firebase";
 import { migrateLocalToCloud } from "@/repositories/migration";
 import { useAuthUser } from "@/hooks/useAuthUser";
+
+/** 認証エラーコードを日本語の案内に変換 */
+function messageForCode(code: string): string {
+  switch (code) {
+    case "auth/unauthorized-domain":
+      return "このドメインが未承認です。Firebaseコンソール → Authentication → Settings → 承認済みドメインに kkokichi.github.io を追加してください";
+    case "auth/operation-not-allowed":
+    case "auth/configuration-not-found":
+      return "Googleログインが有効化されていません（Firebaseコンソールで有効化が必要）";
+    case "auth/network-request-failed":
+      return "ネットワークエラーです。通信環境をご確認ください";
+    default:
+      return `ログインに失敗しました（${code || "不明なエラー"}）`;
+  }
+}
 
 /** Googleログイン / ログアウト。ログイン中は個人データがアカウントに保存される */
 export function AccountSection() {
   const { user, loading } = useAuthUser();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const redirectHandled = useRef(false);
+
+  // リダイレクト方式のログインから戻ってきた場合の処理
+  useEffect(() => {
+    if (redirectHandled.current) return;
+    redirectHandled.current = true;
+    (async () => {
+      try {
+        const redirectedUser = await getGoogleRedirectResult();
+        if (redirectedUser) {
+          setBusy(true);
+          await migrateLocalToCloud();
+          window.location.reload();
+        }
+      } catch (e) {
+        setError(messageForCode(authErrorCode(e)));
+      }
+    })();
+  }, []);
+
+  const finishLogin = async () => {
+    // 端末ローカルのデータをアカウントへ移行（クラウドが空の場合のみ）
+    await migrateLocalToCloud();
+    // Repository Factory を再評価するためリロード
+    window.location.reload();
+  };
 
   const handleLogin = async () => {
     setBusy(true);
     setError(null);
     try {
       await signInWithGoogle();
-      // 端末ローカルのデータをアカウントへ移行（クラウドが空の場合のみ）
-      await migrateLocalToCloud();
-      // Repository Factory を再評価するためリロード
-      window.location.reload();
+      await finishLogin();
     } catch (e) {
-      const code = (e as { code?: string })?.code ?? "";
-      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
-        setError(null);
-      } else if (code === "auth/operation-not-allowed" || code === "auth/configuration-not-found") {
-        setError("Googleログインが未設定です（Firebaseコンソールで有効化が必要）");
-      } else {
-        setError("ログインに失敗しました。時間をおいて再度お試しください");
-        console.error(e);
+      const code = authErrorCode(e);
+      if (code === "auth/cancelled-popup-request") {
+        setBusy(false);
+        return;
       }
+      // ポップアップが塞がれる環境（iOS Safari等）はリダイレクトに切替
+      if (isPopupUnsupportedError(e)) {
+        try {
+          await signInWithGoogleRedirect();
+          return; // 画面が遷移する
+        } catch (redirectErr) {
+          setError(messageForCode(authErrorCode(redirectErr)));
+          setBusy(false);
+          return;
+        }
+      }
+      console.error("Googleログイン失敗", e);
+      setError(messageForCode(code));
       setBusy(false);
     }
   };
@@ -98,7 +152,9 @@ export function AccountSection() {
               {busy ? "ログイン中…" : "Googleでログイン"}
             </Button>
             {error && (
-              <p className="mt-2 text-[11px] text-destructive">{error}</p>
+              <p className="mt-2 text-[11px] leading-relaxed text-destructive">
+                {error}
+              </p>
             )}
           </div>
         )}

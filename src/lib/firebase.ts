@@ -2,8 +2,10 @@ import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import {
   GoogleAuthProvider,
   getAuth,
+  getRedirectResult,
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   type User,
 } from "firebase/auth";
@@ -116,6 +118,31 @@ export async function signInWithGoogle(): Promise<User> {
   return credential.user;
 }
 
+/** ポップアップが使えない環境（iOS Safari等）向けのリダイレクト方式 */
+export async function signInWithGoogleRedirect(): Promise<void> {
+  await signInWithRedirect(getAuth(getFirebaseApp()), new GoogleAuthProvider());
+}
+
+/** リダイレクト方式のログインから戻ってきた場合、そのユーザーを返す */
+export async function getGoogleRedirectResult(): Promise<User | null> {
+  const result = await getRedirectResult(getAuth(getFirebaseApp()));
+  return result?.user ?? null;
+}
+
 export async function signOutUser(): Promise<void> {
   await signOut(getAuth(getFirebaseApp()));
+}
+
+/** ポップアップ失敗時にリダイレクトへフォールバックすべきエラーか */
+export function isPopupUnsupportedError(e: unknown): boolean {
+  const code = (e as { code?: string })?.code ?? "";
+  return (
+    code === "auth/popup-blocked" ||
+    code === "auth/operation-not-supported-in-this-environment" ||
+    code === "auth/popup-closed-by-user"
+  );
+}
+
+export function authErrorCode(e: unknown): string {
+  return (e as { code?: string })?.code ?? "";
 }
