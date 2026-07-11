@@ -56,6 +56,31 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...
 
 ---
 
+## B-2. Googleログイン（アカウント別データ保存）
+
+ログインすると、個人のトレーニングデータ（記録・自己ベスト・プロフィール・
+テンプレート・カスタム種目）が **Googleアカウントごとに Firestore に保存**され、
+別端末でも同じデータを見られます。
+
+### 1. Google プロバイダを有効化
+- Firebase Console → Authentication → Sign-in method → **Google** を有効化
+
+### 2. 承認済みドメインを追加
+- Authentication → Settings → 承認済みドメイン に以下を追加
+  - `kkokichi.github.io`（`localhost` は既定で許可済み）
+
+### 3. OAuth 同意画面（Google Cloud）
+- 任意のGmailでログインできるようにするには、同意画面の公開設定が必要
+  （テスト中はテストユーザーの追加が必要）
+
+### 同期の範囲（設計）
+- **アカウントに同期**: workoutLogs / records / userProfile / workoutTemplates / customExercises
+- **端末ローカルのまま**: 体組成（体重）・進捗写真・実績の獲得日時・リマインダー設定
+- 初回ログイン時、クラウドが空なら端末ローカルのデータを自動移行（既存アカウントは上書きしない）
+- ログアウトすると端末ローカルデータに戻る
+
+---
+
 ## C. GitHub Pages（デプロイ）への反映
 
 `NEXT_PUBLIC_*` はビルド時に埋め込まれるため、GitHub Secrets に登録します:

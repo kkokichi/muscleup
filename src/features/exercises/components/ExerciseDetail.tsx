@@ -8,6 +8,7 @@ import {
   Lightbulb,
   ListOrdered,
   Play,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import type { Exercise } from "@/types";
@@ -32,6 +33,7 @@ function Section({
   ordered?: boolean;
 }) {
   const List = ordered ? "ol" : "ul";
+  if (items.length === 0) return null;
   return (
     <Card className="border-border bg-card">
       <CardHeader className="pb-2">
@@ -62,6 +64,7 @@ export function ExerciseDetail({ exerciseId }: { exerciseId: string }) {
   const { startWorkout, addExercise } = useWorkoutDraftStore();
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -93,9 +96,45 @@ export function ExerciseDetail({ exerciseId }: { exerciseId: string }) {
     router.push("/workout/new");
   };
 
+  const handleDelete = async () => {
+    const repos = await getRepos();
+    await repos.exercises.deleteCustom(exercise.id);
+    router.push("/exercises");
+  };
+
   return (
     <div>
-      <PageHeader title={exercise.nameJa} subtitle={exercise.nameEn} />
+      <PageHeader
+        title={exercise.nameJa}
+        subtitle={exercise.nameEn || "自作の種目"}
+        action={
+          exercise.isCustom ? (
+            confirming ? (
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setConfirming(false)}
+                >
+                  やめる
+                </Button>
+                <Button variant="destructive" size="sm" onClick={handleDelete}>
+                  削除
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="種目を削除"
+                onClick={() => setConfirming(true)}
+              >
+                <Trash2 className="size-4 text-muted-foreground" />
+              </Button>
+            )
+          ) : undefined
+        }
+      />
 
       <div className="mb-4 flex flex-wrap items-center gap-1.5">
         <Badge className="text-[10px]">{categoryNameJa(exercise.categoryId)}</Badge>

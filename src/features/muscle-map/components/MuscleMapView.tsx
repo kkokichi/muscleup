@@ -84,7 +84,11 @@ export function MuscleMapView() {
             </div>
             <div className="space-y-2">
               {matched.map((e) => (
-                <Link key={e.id} href={`/exercises/${e.id}`} className="block">
+                <Link
+                  key={e.id}
+                  href={`/exercises/detail?id=${e.id}`}
+                  className="block"
+                >
                   <Card className="border-border bg-card transition-colors active:bg-secondary/50">
                     <CardContent className="flex items-center justify-between p-3.5">
                       <div>

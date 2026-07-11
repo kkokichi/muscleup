@@ -34,17 +34,22 @@ export function useHomeStats() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const repos = await getRepos();
-      const [l, r, p] = await Promise.all([
-        repos.workoutLogs.getAll(),
-        repos.records.getAll(),
-        repos.userProfile.get(),
-      ]);
-      if (cancelled) return;
-      setLogs(l);
-      setRecords(r);
-      setProfile(p);
-      setIsLoading(false);
+      try {
+        const repos = await getRepos();
+        const [l, r, p] = await Promise.all([
+          repos.workoutLogs.getAll(),
+          repos.records.getAll(),
+          repos.userProfile.get(),
+        ]);
+        if (cancelled) return;
+        setLogs(l);
+        setRecords(r);
+        setProfile(p);
+      } catch (e) {
+        console.error("ホーム統計の読み込みに失敗", e);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
     })();
     return () => {
       cancelled = true;

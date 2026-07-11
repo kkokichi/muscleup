@@ -29,4 +29,11 @@ export const localExerciseRepository: ExerciseRepository = {
     customs.push({ ...exercise, isCustom: true });
     writeStorage(KEY, customs);
   },
+
+  async deleteCustom(id) {
+    writeStorage(
+      KEY,
+      readStorage<Exercise[]>(KEY, []).filter((e) => e.id !== id),
+    );
+  },
 };

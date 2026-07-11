@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Exercise } from "@/types";
 import { getRepos } from "@/repositories";
 
@@ -9,6 +9,11 @@ export function useExercises() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const reload = useCallback(async () => {
+    const repos = await getRepos();
+    setExercises(await repos.exercises.getAll());
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     getRepos()
@@ -16,6 +21,7 @@ export function useExercises() {
       .then((list) => {
         if (!cancelled) setExercises(list);
       })
+      .catch((e) => console.error("種目の読み込みに失敗", e))
       .finally(() => {
         if (!cancelled) setIsLoading(false);
       });
@@ -29,5 +35,5 @@ export function useExercises() {
     [exercises],
   );
 
-  return { exercises, byId, isLoading };
+  return { exercises, byId, isLoading, reload };
 }

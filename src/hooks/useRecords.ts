@@ -16,6 +16,7 @@ export function useRecords() {
       .then((list) => {
         if (!cancelled) setRecords(list);
       })
+      .catch((e) => console.error("自己ベストの読み込みに失敗", e))
       .finally(() => {
         if (!cancelled) setIsLoading(false);
       });

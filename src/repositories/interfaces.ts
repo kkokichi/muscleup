@@ -24,6 +24,7 @@ export interface ExerciseRepository {
   getById(id: string): Promise<Exercise | null>;
   getByCategory(categoryId: MuscleCategoryId): Promise<Exercise[]>;
   saveCustom(exercise: Exercise): Promise<void>;
+  deleteCustom(id: string): Promise<void>;
 }
 
 export interface RecordRepository {

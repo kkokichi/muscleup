@@ -3,15 +3,17 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ChevronRight, Search } from "lucide-react";
+import { ChevronRight, Plus, Search } from "lucide-react";
 import type { MuscleCategoryId } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useExercises } from "@/hooks/useExercises";
 import { EXERCISE_CATEGORIES, categoryNameJa } from "@/data/categories";
 import { MUSCLE_CATEGORY_IDS } from "@/types";
 import { cn } from "@/lib/utils";
+import { CustomExerciseSheet } from "./CustomExerciseSheet";
 
 const EQUIPMENT_LABELS: Record<string, string> = {
   barbell: "バーベル",
@@ -22,10 +24,11 @@ const EQUIPMENT_LABELS: Record<string, string> = {
 };
 
 export function ExerciseList() {
-  const { exercises, isLoading } = useExercises();
+  const { exercises, isLoading, reload } = useExercises();
   // 部位マップからの遷移時（?category=chest 等）に初期フィルタを適用
   const initialCategory = useSearchParams().get("category");
   const [keyword, setKeyword] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
   const [category, setCategory] = useState<MuscleCategoryId | null>(
     MUSCLE_CATEGORY_IDS.includes(initialCategory as MuscleCategoryId)
       ? (initialCategory as MuscleCategoryId)
@@ -46,7 +49,16 @@ export function ExerciseList() {
 
   return (
     <div>
-      <PageHeader title="種目辞典" subtitle="正しいフォームを学ぶ" />
+      <PageHeader
+        title="種目辞典"
+        subtitle="正しいフォームを学ぶ"
+        action={
+          <Button size="sm" variant="secondary" onClick={() => setAddOpen(true)}>
+            <Plus className="size-4" data-icon="inline-start" />
+            追加
+          </Button>
+        }
+      />
 
       <div className="mb-3 flex items-center gap-2 rounded-xl bg-secondary px-3">
         <Search className="size-4 text-muted-foreground" />
@@ -93,11 +105,20 @@ export function ExerciseList() {
       ) : (
         <div className="space-y-2">
           {filtered.map((e) => (
-            <Link key={e.id} href={`/exercises/${e.id}`} className="block">
+            <Link
+              key={e.id}
+              href={`/exercises/detail?id=${e.id}`}
+              className="block"
+            >
               <Card className="border-border bg-card transition-colors active:bg-secondary/50">
                 <CardContent className="flex items-center justify-between gap-3 p-4">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold">{e.nameJa}</p>
+                    <p className="flex items-center gap-1.5 text-sm font-semibold">
+                      {e.nameJa}
+                      {e.isCustom && (
+                        <Badge className="text-[9px]">自作</Badge>
+                      )}
+                    </p>
                     <p className="text-[11px] text-muted-foreground">{e.nameEn}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
@@ -120,6 +141,12 @@ export function ExerciseList() {
           )}
         </div>
       )}
+
+      <CustomExerciseSheet
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onCreated={() => reload()}
+      />
     </div>
   );
 }

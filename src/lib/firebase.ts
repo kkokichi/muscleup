@@ -1,8 +1,11 @@
 import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import {
+  GoogleAuthProvider,
   getAuth,
   onAuthStateChanged,
   signInAnonymously,
+  signInWithPopup,
+  signOut,
   type User,
 } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
@@ -97,4 +100,37 @@ function getLocalDeviceId(): string {
     window.localStorage.setItem(LOCAL_DEVICE_KEY, id);
   }
   return id;
+}
+
+// --- Google ログイン（アカウント別データ保存用） ---
+
+/** 最初の認証状態が確定するのを待つ（匿名サインインはしない・観測のみ） */
+export function onAuthReady(): Promise<User | null> {
+  const auth = getAuth(getFirebaseApp());
+  return new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      unsubscribe();
+      resolve(u);
+    });
+  });
+}
+
+/** ログイン中のGoogleユーザー（匿名は除外）。未ログインなら null */
+export async function getSignedInUser(): Promise<User | null> {
+  const user = await onAuthReady();
+  return user && !user.isAnonymous ? user : null;
+}
+
+export function subscribeAuth(cb: (user: User | null) => void): () => void {
+  return onAuthStateChanged(getAuth(getFirebaseApp()), cb);
+}
+
+export async function signInWithGoogle(): Promise<User> {
+  const provider = new GoogleAuthProvider();
+  const credential = await signInWithPopup(getAuth(getFirebaseApp()), provider);
+  return credential.user;
+}
+
+export async function signOutUser(): Promise<void> {
+  await signOut(getAuth(getFirebaseApp()));
 }

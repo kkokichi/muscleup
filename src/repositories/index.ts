@@ -1,4 +1,4 @@
-import { isFirebaseConfigured } from "@/lib/firebase";
+import { getSignedInUser, isFirebaseConfigured } from "@/lib/firebase";
 import type { Repositories } from "./interfaces";
 import { localWorkoutLogRepository } from "./local/localWorkoutLogRepository";
 import { localExerciseRepository } from "./local/localExerciseRepository";
@@ -25,14 +25,15 @@ let reposPromise: Promise<Repositories> | null = null;
 /**
  * Repository Factory（ハイブリッド構成）。
  *
- * - 個人データ（記録・記録・プロフィール）: 常にローカル（localStorage）。
- *   これにより、Firebase設定を有効にしても既存の記録が失われず、
- *   コアなトレーニング記録はオフラインで確実に動作する。
- *   （クラウド同期＋移行ウィザードはフェーズ1.5で対応予定 — docs/11-roadmap.md）
- * - 共有データ（チェックイン・アドバイス）: Firebase設定時は Firestore、
- *   未設定時はローカル。ここだけが全ユーザー間で共有される。
+ * - 共有データ（チェックイン・アドバイス）: Firebase設定時は Firestore。
+ * - 個人データ（記録・自己ベスト・プロフィール・テンプレート・カスタム種目）:
+ *   Googleログイン中はアカウント（Firestore users/{uid}）に保存。
+ *   未ログイン時は端末ローカル（localStorage）。
+ *   ※体組成・進捗写真・実績・リマインダーは端末ローカルのまま。
  *
  * 呼び出し側はデータソースを一切意識しない。
+ * 認証状態が変わったら AccountSection が window.location.reload() を呼び、
+ * この Factory を再評価させる（reposPromise が作り直される）。
  */
 export function getRepos(): Promise<Repositories> {
   reposPromise ??= resolve();
@@ -40,21 +41,27 @@ export function getRepos(): Promise<Repositories> {
 }
 
 async function resolve(): Promise<Repositories> {
-  // 個人データは常にローカル
   const repos: Repositories = { ...localRepositories };
 
   if (isFirebaseConfigured()) {
     try {
       const mod = await import("./firestore");
       const firestore = mod.createFirestoreRepositories();
-      // 共有データのみ Firestore に差し替える
+      // 共有データは常に Firestore
       repos.checkins = firestore.checkins;
       repos.advice = firestore.advice;
+
+      // Googleログイン中は個人データもアカウントに保存
+      const user = await getSignedInUser();
+      if (user) {
+        repos.workoutLogs = firestore.workoutLogs;
+        repos.records = firestore.records;
+        repos.userProfile = firestore.userProfile;
+        repos.workoutTemplates = firestore.workoutTemplates;
+        repos.exercises = firestore.exercises;
+      }
     } catch (error) {
-      console.error(
-        "Firestore初期化に失敗。共有データもローカルで継続します",
-        error,
-      );
+      console.error("Firestore初期化に失敗。ローカルで継続します", error);
     }
   }
 

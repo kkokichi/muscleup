@@ -14,10 +14,11 @@ export function useWorkoutLogs() {
     getRepos()
       .then((repos) => repos.workoutLogs.getAll())
       .then((list) => {
-        if (!cancelled) {
-          setLogs(list);
-          setIsLoading(false);
-        }
+        if (!cancelled) setLogs(list);
+      })
+      .catch((e) => console.error("記録の読み込みに失敗", e))
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
       });
     return () => {
       cancelled = true;

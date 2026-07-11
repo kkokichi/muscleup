@@ -7,6 +7,7 @@ import { DisplayNameInput } from "@/components/common/DisplayNameInput";
 import { useHasMounted } from "@/hooks/useHasMounted";
 import { useUserName } from "@/hooks/useUserName";
 import { useReminderSettings } from "../hooks/useReminderSettings";
+import { AccountSection } from "./AccountSection";
 
 export function SettingsView() {
   const mounted = useHasMounted();
@@ -18,6 +19,8 @@ export function SettingsView() {
       <PageHeader title="設定" subtitle="プロフィール・通知" />
 
       <div className="space-y-4">
+        <AccountSection />
+
         <Card className="border-border bg-card">
           <CardContent className="p-4">
             <p className="mb-2 text-sm font-semibold">表示名</p>
