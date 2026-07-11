@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ExerciseAdvice } from "@/types";
 import { getRepos } from "@/repositories";
-import { getAuthorId } from "@/lib/firebase";
+import { getUid, isNotSignedInError } from "@/lib/firebase";
 import { createId } from "@/utils/id";
 import { readStorage, writeStorage } from "@/repositories/local/storage";
 
@@ -18,6 +18,7 @@ export function useExerciseAdvice(exerciseId: string) {
     () => new Set(readStorage<string[]>(LIKED_KEY, [])),
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [needsLogin, setNeedsLogin] = useState(false);
 
   const reload = useCallback(async () => {
     const repos = await getRepos();
@@ -32,7 +33,9 @@ export function useExerciseAdvice(exerciseId: string) {
         const list = await repos.advice.getByExercise(exerciseId);
         if (!cancelled) setAdvice(list);
       } catch (e) {
-        console.error("アドバイスの読み込みに失敗", e);
+        if (cancelled) return;
+        if (isNotSignedInError(e)) setNeedsLogin(true);
+        else console.error("アドバイスの読み込みに失敗", e);
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -50,7 +53,7 @@ export function useExerciseAdvice(exerciseId: string) {
       const item: ExerciseAdvice = {
         id: createId(),
         exerciseId,
-        userId: await getAuthorId(),
+        userId: await getUid(),
         authorName,
         body: trimmed,
         createdAt: new Date().toISOString(),
@@ -85,5 +88,5 @@ export function useExerciseAdvice(exerciseId: string) {
     [likedIds],
   );
 
-  return { advice, likedIds, isLoading, postAdvice, toggleLike };
+  return { advice, likedIds, isLoading, needsLogin, postAdvice, toggleLike };
 }

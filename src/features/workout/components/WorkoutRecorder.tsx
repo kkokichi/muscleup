@@ -11,6 +11,7 @@ import { useHasMounted } from "@/hooks/useHasMounted";
 import { useExercises } from "@/hooks/useExercises";
 import { useWorkoutLogs } from "@/hooks/useWorkoutLogs";
 import { useUserName } from "@/hooks/useUserName";
+import { useAuthUser } from "@/hooks/useAuthUser";
 import { useWorkoutDraftStore } from "@/stores/workoutDraftStore";
 import { useMascotStore } from "@/stores/mascotStore";
 import { formatDateJa, minutesSince } from "@/utils/date";
@@ -40,6 +41,7 @@ export function WorkoutRecorder() {
   const { saveWorkout, isSaving } = useSaveWorkout(byId);
   const { name, saveName } = useUserName();
   const { addCheckin } = useCheckins();
+  const { user } = useAuthUser();
   const speak = useMascotStore((s) => s.speak);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [checkinOpen, setCheckinOpen] = useState(false);
@@ -103,14 +105,16 @@ export function WorkoutRecorder() {
           <Clock className="size-3.5" />
           <span className="tabular-nums">経過 {elapsed}分</span>
         </div>
-        <button
-          type="button"
-          onClick={() => setCheckinOpen(true)}
-          className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground transition-colors active:bg-secondary/70"
-        >
-          <MapPin className="size-3.5 text-primary" />
-          チェックイン
-        </button>
+        {user && (
+          <button
+            type="button"
+            onClick={() => setCheckinOpen(true)}
+            className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground transition-colors active:bg-secondary/70"
+          >
+            <MapPin className="size-3.5 text-primary" />
+            チェックイン
+          </button>
+        )}
       </div>
 
       <RestTimerBar />

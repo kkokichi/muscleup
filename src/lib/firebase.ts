@@ -3,7 +3,6 @@ import {
   GoogleAuthProvider,
   getAuth,
   onAuthStateChanged,
-  signInAnonymously,
   signInWithPopup,
   signOut,
   type User,
@@ -61,50 +60,36 @@ export function getDb(): Firestore {
   return getFirestore(getFirebaseApp());
 }
 
+/** ログインが必要な操作でユーザー未ログインの時に投げるエラー */
+export class NotSignedInError extends Error {
+  constructor() {
+    super("ログインが必要です");
+    this.name = "NotSignedInError";
+  }
+}
+
+export function isNotSignedInError(e: unknown): boolean {
+  return (
+    e instanceof NotSignedInError ||
+    (e as { code?: string })?.code === "auth/admin-restricted-operation"
+  );
+}
+
 /**
- * 匿名認証でUIDを取得する（MVPは匿名運用。
- * フェーズ1.5でGoogle/Apple連携へアップグレード可能）。
+ * ログイン中ユーザーのUIDを返す。未ログインなら NotSignedInError を投げる。
+ * （匿名認証は廃止。コミュニティ・アカウント保存はGoogleログイン前提）
  */
 export async function getUid(): Promise<string> {
   const auth = getAuth(getFirebaseApp());
   if (auth.currentUser) return auth.currentUser.uid;
-
-  const user = await new Promise<User | null>((resolve) => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      unsubscribe();
-      resolve(u);
-    });
-  });
+  const user = await onAuthReady();
   if (user) return user.uid;
-
-  const credential = await signInAnonymously(auth);
-  return credential.user.uid;
-}
-
-/**
- * Firebase設定時は匿名UID、未設定時は端末固有の擬似IDを返す。
- * コミュニティ投稿の author 識別に使う。
- */
-export async function getAuthorId(): Promise<string> {
-  if (isFirebaseConfigured()) return getUid();
-  return getLocalDeviceId();
-}
-
-const LOCAL_DEVICE_KEY = "muscleup:v1:deviceId";
-
-function getLocalDeviceId(): string {
-  if (typeof window === "undefined") return "local";
-  let id = window.localStorage.getItem(LOCAL_DEVICE_KEY);
-  if (!id) {
-    id = `local-${Math.random().toString(36).slice(2, 10)}`;
-    window.localStorage.setItem(LOCAL_DEVICE_KEY, id);
-  }
-  return id;
+  throw new NotSignedInError();
 }
 
 // --- Google ログイン（アカウント別データ保存用） ---
 
-/** 最初の認証状態が確定するのを待つ（匿名サインインはしない・観測のみ） */
+/** 最初の認証状態が確定するのを待つ（観測のみ） */
 export function onAuthReady(): Promise<User | null> {
   const auth = getAuth(getFirebaseApp());
   return new Promise((resolve) => {

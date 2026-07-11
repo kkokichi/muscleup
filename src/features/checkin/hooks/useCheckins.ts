@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Checkin, CheckinDraft } from "@/types";
 import { getRepos } from "@/repositories";
-import { getAuthorId } from "@/lib/firebase";
+import { getUid, isNotSignedInError } from "@/lib/firebase";
 import { createId } from "@/utils/id";
 
 /** チェックインの読み込みと作成 */
 export function useCheckins() {
   const [checkins, setCheckins] = useState<Checkin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [needsLogin, setNeedsLogin] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
@@ -25,9 +26,13 @@ export function useCheckins() {
         const list = await repos.checkins.getAll();
         if (!cancelled) setCheckins(list);
       } catch (e) {
-        // Firestore未設定・ルール未適用などでも画面を止めない
-        console.error("チェックインの読み込みに失敗", e);
-        if (!cancelled) setError("チェックインを読み込めませんでした");
+        if (cancelled) return;
+        if (isNotSignedInError(e)) {
+          setNeedsLogin(true);
+        } else {
+          console.error("チェックインの読み込みに失敗", e);
+          setError("チェックインを読み込めませんでした");
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -43,7 +48,7 @@ export function useCheckins() {
       const checkin: Checkin = {
         ...draft,
         id: createId(),
-        userId: await getAuthorId(),
+        userId: await getUid(),
         authorName,
         createdAt: new Date().toISOString(),
       };
@@ -54,5 +59,5 @@ export function useCheckins() {
     [reload],
   );
 
-  return { checkins, isLoading, error, addCheckin, reload };
+  return { checkins, isLoading, needsLogin, error, addCheckin, reload };
 }

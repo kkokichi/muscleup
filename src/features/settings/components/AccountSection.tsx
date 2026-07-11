@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { signInWithGoogle, signOutUser } from "@/lib/firebase";
 import { migrateLocalToCloud } from "@/repositories/migration";
-import { useAuthUser } from "../hooks/useAuthUser";
+import { useAuthUser } from "@/hooks/useAuthUser";
 
 /** Googleログイン / ログアウト。ログイン中は個人データがアカウントに保存される */
 export function AccountSection() {

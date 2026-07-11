@@ -14,7 +14,7 @@ import { useExerciseAdvice } from "../hooks/useExerciseAdvice";
 /** 種目詳細の「みんなのアドバイス」共有セクション */
 export function ExerciseAdviceSection({ exerciseId }: { exerciseId: string }) {
   const mounted = useHasMounted();
-  const { advice, likedIds, isLoading, postAdvice, toggleLike } =
+  const { advice, likedIds, isLoading, needsLogin, postAdvice, toggleLike } =
     useExerciseAdvice(exerciseId);
   const { name, saveName } = useUserName();
   const [open, setOpen] = useState(false);
@@ -39,6 +39,27 @@ export function ExerciseAdviceSection({ exerciseId }: { exerciseId: string }) {
       setPosting(false);
     }
   };
+
+  if (mounted && needsLogin) {
+    return (
+      <Card className="border-border bg-card">
+        <CardContent className="p-4">
+          <h2 className="mb-3 text-sm font-bold">みんなのアドバイス</h2>
+          <div className="rounded-xl bg-secondary/40 p-4 text-center">
+            <p className="mb-2 text-xs text-muted-foreground">
+              ログインするとコツを共有・閲覧できます
+            </p>
+            <a
+              href="/settings"
+              className="text-xs font-semibold text-primary"
+            >
+              設定からログイン
+            </a>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-border bg-card">

@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useHasMounted } from "@/hooks/useHasMounted";
 import { useUserName } from "@/hooks/useUserName";
 import { DEFAULT_MAP_CENTER, isMapsConfigured } from "@/lib/maps";
+import { LoginPrompt } from "@/components/common/LoginPrompt";
 import { Mascot } from "@/features/mascot/components/Mascot";
 import { useMascotStore } from "@/stores/mascotStore";
 import { useCheckins } from "../hooks/useCheckins";
@@ -18,7 +19,7 @@ import { CheckinCard } from "./CheckinCard";
 /** ジムマップ: チェックインを地図（またはリスト）で表示し、新規チェックインできる */
 export function GymMapView() {
   const mounted = useHasMounted();
-  const { checkins, isLoading, error, addCheckin } = useCheckins();
+  const { checkins, isLoading, needsLogin, error, addCheckin } = useCheckins();
   const { name, saveName } = useUserName();
   const speak = useMascotStore((s) => s.speak);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -37,6 +38,12 @@ export function GymMapView() {
     await addCheckin(draft, authorName);
     speak("workoutSaved");
   };
+
+  if (mounted && needsLogin) {
+    return (
+      <LoginPrompt message="ログインするとジムにチェックインして仲間と共有できます" />
+    );
+  }
 
   return (
     <div>
@@ -65,7 +72,7 @@ export function GymMapView() {
 
       {error && (
         <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-xs text-destructive">
-          {error}（Firebaseの匿名認証・Firestore・ルールの設定をご確認ください）
+          {error}（Firestore・ルールの設定をご確認ください）
         </p>
       )}
 
