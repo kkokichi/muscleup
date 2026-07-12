@@ -41,7 +41,12 @@ export function clearKnownGoogleSession(): void {
 
 export function hasKnownGoogleSession(): boolean {
   if (typeof window === "undefined") return false;
-  return window.localStorage.getItem(GOOGLE_SESSION_KEY) === "true";
+  if (window.localStorage.getItem(GOOGLE_SESSION_KEY) === "true") return true;
+
+  const { apiKey } = getFirebaseConfig();
+  return Object.keys(window.localStorage).some((key) =>
+    key.startsWith(`firebase:authUser:${apiKey}:`),
+  );
 }
 
 function getFirebaseConfig() {
