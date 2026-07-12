@@ -37,3 +37,15 @@ export function daysAgoISO(n: number, from: Date = new Date()): string {
   d.setDate(d.getDate() - n);
   return format(d, "yyyy-MM-dd");
 }
+
+/** ISO日時から現在までの経過を「3日16時間前」形式で返す */
+export function formatElapsed(fromISO: string, now: Date = new Date()): string {
+  const diffMs = now.getTime() - parseISO(fromISO).getTime();
+  if (diffMs < 60_000) return "たった今";
+  const totalHours = Math.floor(diffMs / 3_600_000);
+  const days = Math.floor(totalHours / 24);
+  const hours = totalHours % 24;
+  if (days > 0) return `${days}日${hours}時間前`;
+  if (totalHours > 0) return `${totalHours}時間前`;
+  return `${Math.floor(diffMs / 60_000)}分前`;
+}

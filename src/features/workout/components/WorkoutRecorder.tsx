@@ -14,7 +14,8 @@ import { useUserName } from "@/hooks/useUserName";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { useWorkoutDraftStore } from "@/stores/workoutDraftStore";
 import { useMascotStore } from "@/stores/mascotStore";
-import { formatDateJa, minutesSince } from "@/utils/date";
+import { calcCategoryLastTrained } from "@/services/statsService";
+import { formatDateJa, formatElapsed, minutesSince } from "@/utils/date";
 import { useCheckins } from "@/features/checkin/hooks/useCheckins";
 import { CheckinComposer } from "@/features/checkin/components/CheckinComposer";
 import { useSaveWorkout } from "../hooks/useSaveWorkout";
@@ -23,11 +24,14 @@ import { ExercisePickerSheet } from "./ExercisePickerSheet";
 import { RestTimerBar } from "./RestTimerBar";
 import { WorkoutTemplatePanel } from "./WorkoutTemplatePanel";
 
-/** 直近ログから種目の前回実績を引く（前回値プリセットの核） */
-function lastEntryFor(logs: WorkoutLog[], exerciseId: string): WorkoutEntry | null {
+/** 直近ログから種目の前回セッション（日付+全セット）を引く */
+function lastSessionFor(
+  logs: WorkoutLog[],
+  exerciseId: string,
+): { date: string; entry: WorkoutEntry } | null {
   for (const log of logs) {
     const entry = log.entries.find((e) => e.exerciseId === exerciseId);
-    if (entry && entry.sets.length > 0) return entry;
+    if (entry && entry.sets.length > 0) return { date: log.date, entry };
   }
   return null;
 }
@@ -67,14 +71,25 @@ export function WorkoutRecorder() {
     return ids;
   }, [logs]);
 
+  // 部位（カテゴリ）ごとの「何日何時間前」ラベル
+  const categoryElapsed = useMemo(() => {
+    const lastTrained = calcCategoryLastTrained(
+      logs,
+      (id) => byId.get(id)?.categoryId,
+    );
+    const result: Record<string, string> = {};
+    for (const [cat, iso] of lastTrained) result[cat] = formatElapsed(iso);
+    return result;
+  }, [logs, byId]);
+
   if (!mounted || !draft) return null;
 
   const elapsed = minutesSince(draft.startedAt);
   const canSave = draft.entries.some((e) => e.sets.some((s) => s.reps > 0));
 
   const handleSelectExercise = (exerciseId: string) => {
-    const prev = lastEntryFor(logs, exerciseId);
-    const presetSets: DraftSet[] | undefined = prev?.sets.map((s) => ({
+    const prev = lastSessionFor(logs, exerciseId);
+    const presetSets: DraftSet[] | undefined = prev?.entry.sets.map((s) => ({
       weightKg: s.weightKg,
       reps: s.reps,
       isDone: false,
@@ -121,21 +136,15 @@ export function WorkoutRecorder() {
       <WorkoutTemplatePanel draft={draft} latestLog={logs[0]} />
 
       <div className="space-y-4">
-        {draft.entries.map((entry, i) => {
-          const prev = lastEntryFor(logs, entry.exerciseId);
-          const hint = prev
-            ? `前回 ${prev.sets[0].weightKg}kg × ${prev.sets[0].reps}回 · ${prev.sets.length}セット`
-            : undefined;
-          return (
-            <FadeIn key={entry.exerciseId} delay={i * 0.05}>
-              <ExerciseEntryCard
-                entry={entry}
-                exercise={byId.get(entry.exerciseId)}
-                previousHint={hint}
-              />
-            </FadeIn>
-          );
-        })}
+        {draft.entries.map((entry, i) => (
+          <FadeIn key={entry.exerciseId} delay={i * 0.05}>
+            <ExerciseEntryCard
+              entry={entry}
+              exercise={byId.get(entry.exerciseId)}
+              previous={lastSessionFor(logs, entry.exerciseId)}
+            />
+          </FadeIn>
+        ))}
 
         <Button
           variant="outline"
@@ -161,6 +170,7 @@ export function WorkoutRecorder() {
         exercises={exercises}
         recentIds={recentIds}
         excludeIds={draft.entries.map((e) => e.exerciseId)}
+        categoryElapsed={categoryElapsed}
         onSelect={(e) => handleSelectExercise(e.id)}
         onClose={() => setPickerOpen(false)}
       />

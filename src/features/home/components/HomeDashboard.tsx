@@ -14,11 +14,12 @@ import { formatDateJa } from "@/utils/date";
 import { todayISO } from "@/utils/date";
 import { MascotGreetingCard } from "./MascotGreetingCard";
 import { StatsGrid } from "./StatsGrid";
-import { WeeklyCard } from "./WeeklyCard";
 import { TodayPlanCard } from "./TodayPlanCard";
 import { RecentWorkoutsList } from "./RecentWorkoutsList";
 import { ReminderNudge } from "./ReminderNudge";
 import { HomeQuickLinks } from "./HomeQuickLinks";
+import { VolumeSummaryCard } from "./VolumeSummaryCard";
+import { MonthlyCalendarCard } from "./MonthlyCalendarCard";
 
 const settingsAction = (
   <Link
@@ -92,9 +93,12 @@ export function HomeDashboard() {
           <HomeQuickLinks />
         </FadeIn>
         <FadeIn delay={0.2}>
-          <WeeklyCard weekly={stats.weekly} />
+          <VolumeSummaryCard logs={stats.logs} />
         </FadeIn>
         <FadeIn delay={0.25}>
+          <MonthlyCalendarCard logs={stats.logs} />
+        </FadeIn>
+        <FadeIn delay={0.3}>
           <RecentWorkoutsList logs={stats.recentLogs} exerciseById={byId} />
         </FadeIn>
       </div>

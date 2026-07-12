@@ -159,6 +159,78 @@ export function buildActivityByDate(logs: WorkoutLog[]): Map<string, DayActivity
   return map;
 }
 
+/** 部位（カテゴリ）ごとに、最後にトレーニングした日時(ISO)を返す */
+export function calcCategoryLastTrained(
+  logs: WorkoutLog[],
+  categoryOf: (exerciseId: string) => string | undefined,
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const log of logs) {
+    for (const entry of log.entries) {
+      const cat = categoryOf(entry.exerciseId);
+      if (!cat) continue;
+      const prev = map.get(cat);
+      if (!prev || log.createdAt > prev) map.set(cat, log.createdAt);
+    }
+  }
+  return map;
+}
+
+export interface VolumeSummary {
+  /** 累計総負荷量(kg) */
+  total: number;
+  /** 直近7日の総負荷量(kg) */
+  last7: number;
+  /** 直近28日の総負荷量(kg) */
+  last28: number;
+  /** 今週〜4週前の週別総負荷量(kg)。index0=今週 */
+  weeks: { label: string; volume: number }[];
+}
+
+/** 総負荷量サマリー（7日/28日/累計 + 週別バー） */
+export function calcVolumeSummary(
+  logs: WorkoutLog[],
+  today = todayISO(),
+): VolumeSummary {
+  const byDate = new Map<string, number>();
+  let total = 0;
+  for (const log of logs) {
+    const v = calcLogVolume(log);
+    total += v;
+    byDate.set(log.date, (byDate.get(log.date) ?? 0) + v);
+  }
+
+  const base = new Date(`${today}T00:00:00`);
+  const sumRange = (fromDaysAgo: number, toDaysAgo: number): number => {
+    let sum = 0;
+    for (let d = toDaysAgo; d <= fromDaysAgo; d++) {
+      sum += byDate.get(daysAgoISO(d, base)) ?? 0;
+    }
+    return sum;
+  };
+
+  const last7 = sumRange(6, 0);
+  const last28 = sumRange(27, 0);
+
+  // 週別（月曜始まり）。今週から4週前まで
+  const mondayOffset = (base.getDay() + 6) % 7;
+  const weeks = Array.from({ length: 5 }, (_, i) => {
+    let volume = 0;
+    for (let d = 0; d < 7; d++) {
+      volume += byDate.get(daysAgoISO(mondayOffset + i * 7 - d, base)) ?? 0;
+    }
+    return { label: i === 0 ? "今週" : `${i}週前`, volume };
+  });
+
+  return { total, last7, last28, weeks };
+}
+
+/** 総負荷量を kg / t で見やすく整形（1000kg以上はトン表記） */
+export function formatVolume(kg: number): string {
+  if (kg >= 1000) return `${(kg / 1000).toFixed(2)} t`;
+  return `${Math.round(kg).toLocaleString()} kg`;
+}
+
 /** これまでの最長連続トレーニング日数 */
 export function calcLongestStreak(logs: WorkoutLog[]): number {
   const dates = [...new Set(logs.map((l) => l.date))].sort();

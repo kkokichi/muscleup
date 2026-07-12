@@ -14,16 +14,19 @@ interface ExercisePickerSheetProps {
   recentIds: string[];
   /** すでに追加済みの種目ID（非表示にする） */
   excludeIds: string[];
+  /** 部位ごとの「何日何時間前」ラベル */
+  categoryElapsed?: Record<string, string>;
   onSelect: (exercise: Exercise) => void;
   onClose: () => void;
 }
 
-/** 種目選択のボトムシート。検索 + 部位フィルタ + 最近使った順 */
+/** 種目選択のボトムシート。検索 + 部位フィルタ（最終実施からの経過つき）+ 最近使った順 */
 export function ExercisePickerSheet({
   open,
   exercises,
   recentIds,
   excludeIds,
+  categoryElapsed,
   onSelect,
   onClose,
 }: ExercisePickerSheetProps) {
@@ -100,6 +103,7 @@ export function ExercisePickerSheet({
                   <CategoryChip
                     key={c.id}
                     label={c.nameJa}
+                    elapsed={categoryElapsed?.[c.id] ?? "未実施"}
                     active={category === c.id}
                     onClick={() => setCategory(c.id)}
                   />
@@ -141,10 +145,12 @@ export function ExercisePickerSheet({
 
 function CategoryChip({
   label,
+  elapsed,
   active,
   onClick,
 }: {
   label: string;
+  elapsed?: string;
   active: boolean;
   onClick: () => void;
 }) {
@@ -153,11 +159,21 @@ function CategoryChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors",
+        "flex shrink-0 flex-col items-center rounded-2xl px-3.5 py-1.5 transition-colors",
         active ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground",
       )}
     >
-      {label}
+      <span className="text-xs font-semibold">{label}</span>
+      {elapsed && (
+        <span
+          className={cn(
+            "text-[9px]",
+            active ? "text-primary-foreground/80" : "text-muted-foreground",
+          )}
+        >
+          {elapsed}
+        </span>
+      )}
     </button>
   );
 }
