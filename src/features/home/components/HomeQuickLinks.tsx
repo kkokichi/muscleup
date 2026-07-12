@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { Award, CalendarDays, Scale } from "lucide-react";
+import { Award, History, MapPinned } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const LINKS = [
-  { href: "/achievements", label: "実績", icon: Award },
-  { href: "/body", label: "体組成", icon: Scale },
-  { href: "/history", label: "カレンダー", icon: CalendarDays },
+  { href: "/achievements", label: "ベスト", icon: Award },
+  { href: "/history", label: "履歴", icon: History },
+  { href: "/muscle-map", label: "マップ", icon: MapPinned },
 ] as const;
 
 /** ホームから各セクションへのクイックリンク */

@@ -18,6 +18,64 @@ export interface LevelInfo {
   progress: number;
 }
 
+export interface MascotEvolution {
+  id: "egg" | "rookie" | "power" | "athlete" | "legend";
+  minLevel: number;
+  maxLevel: number | null;
+  name: string;
+  title: string;
+  message: string;
+  accentClassName: string;
+}
+
+export const MASCOT_EVOLUTIONS: MascotEvolution[] = [
+  {
+    id: "egg",
+    minLevel: 1,
+    maxLevel: 4,
+    name: "たまごマッスー",
+    title: "初心者マッスー",
+    message: "まずは記録するだけで十分ッス。小さく始めよう。",
+    accentClassName: "from-zinc-400/30 to-primary/20",
+  },
+  {
+    id: "rookie",
+    minLevel: 5,
+    maxLevel: 9,
+    name: "ジム見習いマッスー",
+    title: "フォーム研究生",
+    message: "習慣が育ってきたッス。前回値を1つだけ超えよう。",
+    accentClassName: "from-lime-400/25 to-primary/25",
+  },
+  {
+    id: "power",
+    minLevel: 10,
+    maxLevel: 19,
+    name: "パワーマッスー",
+    title: "常連リフター",
+    message: "ここから伸びるッス。重さ・回数・休養を整えよう。",
+    accentClassName: "from-orange-400/25 to-primary/25",
+  },
+  {
+    id: "athlete",
+    minLevel: 20,
+    maxLevel: 34,
+    name: "アスリートマッスー",
+    title: "鋼の求道者",
+    message: "強さに安定感が出てきたッス。弱点部位も攻めよう。",
+    accentClassName: "from-sky-400/25 to-primary/25",
+  },
+  {
+    id: "legend",
+    minLevel: 35,
+    maxLevel: null,
+    name: "レジェンドマッスー",
+    title: "リビングレジェンド",
+    message: "ここまで続けた事実が才能ッス。次は誰かを励まそう。",
+    accentClassName: "from-yellow-300/30 to-primary/25",
+  },
+];
+
 /** レベルnに上がるのに必要なXP: 100 * n（累積は等差級数） */
 export function levelFromXp(xp: number): LevelInfo {
   let level = 1;
@@ -33,6 +91,31 @@ export function levelFromXp(xp: number): LevelInfo {
     nextLevelXp,
     progress: remaining / nextLevelXp,
   };
+}
+
+export function totalXpToReachLevel(level: number): number {
+  const safeLevel = Math.max(1, Math.floor(level));
+  return ((safeLevel - 1) * safeLevel * 100) / 2;
+}
+
+export function getMascotEvolution(level: number): MascotEvolution {
+  return (
+    MASCOT_EVOLUTIONS.find(
+      (stage) =>
+        level >= stage.minLevel &&
+        (stage.maxLevel === null || level <= stage.maxLevel),
+    ) ?? MASCOT_EVOLUTIONS[0]
+  );
+}
+
+export function xpUntilNextEvolution(totalXp: number, level: number): number | null {
+  const currentStage = getMascotEvolution(level);
+  const currentIndex = MASCOT_EVOLUTIONS.findIndex(
+    (stage) => stage.id === currentStage.id,
+  );
+  const nextStage = MASCOT_EVOLUTIONS[currentIndex + 1];
+  if (!nextStage) return null;
+  return Math.max(0, totalXpToReachLevel(nextStage.minLevel) - totalXp);
 }
 
 /** レベルに応じた称号（将来はachievementsマスタ駆動に置き換え） */

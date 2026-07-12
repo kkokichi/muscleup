@@ -3,10 +3,12 @@ import { persist } from "zustand/middleware";
 import type { DraftSet, WorkoutDraft, WorkoutLog, WorkoutTemplate } from "@/types";
 import { templateSetsToDraftSets } from "@/services/templateService";
 import { todayISO } from "@/utils/date";
+import { createId } from "@/utils/id";
 
 interface WorkoutDraftState {
   draft: WorkoutDraft | null;
   startWorkout: () => void;
+  ensureActiveLogId: () => void;
   startFromTemplate: (template: WorkoutTemplate) => void;
   startFromLog: (log: WorkoutLog) => void;
   addExercise: (exerciseId: string, presetSets?: DraftSet[]) => void;
@@ -48,9 +50,16 @@ export const useWorkoutDraftStore = create<WorkoutDraftState>()(
       draft: null,
 
       startWorkout: () => {
-        if (get().draft) return; // 進行中の下書きを保護
+        const existing = get().draft;
+        if (existing) {
+          if (!existing.activeLogId) {
+            set({ draft: { ...existing, activeLogId: createId() } });
+          }
+          return; // 進行中の下書きを保護
+        }
         set({
           draft: {
+            activeLogId: createId(),
             date: todayISO(),
             startedAt: new Date().toISOString(),
             entries: [],
@@ -59,9 +68,16 @@ export const useWorkoutDraftStore = create<WorkoutDraftState>()(
         });
       },
 
+      ensureActiveLogId: () => {
+        const { draft } = get();
+        if (!draft || draft.activeLogId) return;
+        set({ draft: { ...draft, activeLogId: createId() } });
+      },
+
       startFromTemplate: (template) => {
         set({
           draft: {
+            activeLogId: createId(),
             date: todayISO(),
             startedAt: new Date().toISOString(),
             entries: template.entries.map((entry) => ({
@@ -76,6 +92,7 @@ export const useWorkoutDraftStore = create<WorkoutDraftState>()(
       startFromLog: (log) => {
         set({
           draft: {
+            activeLogId: createId(),
             date: todayISO(),
             startedAt: new Date().toISOString(),
             entries: log.entries.map((entry) => ({

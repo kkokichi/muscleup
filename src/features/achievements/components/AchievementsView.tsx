@@ -4,17 +4,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FadeIn } from "@/components/common/FadeIn";
 import { useHasMounted } from "@/hooks/useHasMounted";
+import { useExercises } from "@/hooks/useExercises";
+import { useRecords } from "@/hooks/useRecords";
 import { useAchievements } from "../hooks/useAchievements";
 import { AchievementBadge } from "./AchievementBadge";
+import { PersonalRecordsList } from "./PersonalRecordsList";
 
 export function AchievementsView() {
   const mounted = useHasMounted();
   const { progress, unlockedCount, total, isLoading } = useAchievements();
+  const { records, isLoading: recordsLoading } = useRecords();
+  const { byId, isLoading: exercisesLoading } = useExercises();
 
-  if (!mounted || isLoading) {
+  if (!mounted || isLoading || recordsLoading || exercisesLoading) {
     return (
       <div>
-        <PageHeader title="実績" subtitle="バッジコレクション" />
+        <PageHeader title="実績" subtitle="ベスト更新・バッジ" />
         <div className="h-40 animate-pulse rounded-2xl bg-card" />
       </div>
     );
@@ -24,14 +29,18 @@ export function AchievementsView() {
     <div>
       <PageHeader
         title="実績"
-        subtitle="バッジコレクション"
+        subtitle="ベスト更新・バッジ"
         action={
           <span className="text-sm font-bold tabular-nums text-primary">
-            {unlockedCount}
-            <span className="text-muted-foreground">/{total}</span>
+            {records.reduce((sum, record) => sum + record.updatedCount, 0)}
+            <span className="text-muted-foreground"> 更新</span>
           </span>
         }
       />
+
+      <div className="mb-5">
+        <PersonalRecordsList records={records} exerciseById={byId} />
+      </div>
 
       <Card className="mb-4 border-border bg-card">
         <CardContent className="p-4">

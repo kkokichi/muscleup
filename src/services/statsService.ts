@@ -181,10 +181,28 @@ export interface VolumeSummary {
   total: number;
   /** 直近7日の総負荷量(kg) */
   last7: number;
+  /** その前7日の総負荷量(kg) */
+  previous7: number;
+  /** 直近7日 - その前7日 */
+  last7Delta: number;
   /** 直近28日の総負荷量(kg) */
   last28: number;
+  /** 表示対象週の自己最高総負荷量(kg) */
+  bestWeek: number;
+  /** バー表示用の段階的な目標上限(kg) */
+  weekTarget: number;
   /** 今週〜4週前の週別総負荷量(kg)。index0=今週 */
   weeks: { label: string; volume: number }[];
+}
+
+const VOLUME_GOALS = [1000, 5000, 10000, 20000, 50000, 100000, 200000, 500000];
+
+export function nextVolumeGoal(kg: number): number {
+  const target = Math.max(1, kg * 1.2);
+  return (
+    VOLUME_GOALS.find((goal) => goal >= target) ??
+    Math.ceil(target / 100000) * 100000
+  );
 }
 
 /** 総負荷量サマリー（7日/28日/累計 + 週別バー） */
@@ -210,6 +228,7 @@ export function calcVolumeSummary(
   };
 
   const last7 = sumRange(6, 0);
+  const previous7 = sumRange(13, 7);
   const last28 = sumRange(27, 0);
 
   // 週別（月曜始まり）。今週から4週前まで
@@ -222,13 +241,30 @@ export function calcVolumeSummary(
     return { label: i === 0 ? "今週" : `${i}週前`, volume };
   });
 
-  return { total, last7, last28, weeks };
+  const bestWeek = Math.max(0, ...weeks.map((week) => week.volume), last7);
+  const weekTarget = nextVolumeGoal(bestWeek);
+
+  return {
+    total,
+    last7,
+    previous7,
+    last7Delta: last7 - previous7,
+    last28,
+    bestWeek,
+    weekTarget,
+    weeks,
+  };
 }
 
 /** 総負荷量を kg / t で見やすく整形（1000kg以上はトン表記） */
 export function formatVolume(kg: number): string {
   if (kg >= 1000) return `${(kg / 1000).toFixed(2)} t`;
   return `${Math.round(kg).toLocaleString()} kg`;
+}
+
+export function formatSignedVolume(kg: number): string {
+  const sign = kg > 0 ? "+" : kg < 0 ? "-" : "±";
+  return `${sign}${formatVolume(Math.abs(kg))}`;
 }
 
 /** これまでの最長連続トレーニング日数 */

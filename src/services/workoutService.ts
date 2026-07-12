@@ -23,11 +23,11 @@ export function draftToLog(draft: WorkoutDraft): WorkoutLog {
     .filter((e) => e.sets.length > 0);
 
   return {
-    id: createId(),
+    id: draft.activeLogId ?? createId(),
     date: draft.date,
     entries,
     note: draft.note.trim(),
     durationMinutes: Math.min(minutesSince(draft.startedAt), 600),
-    createdAt: new Date().toISOString(),
+    createdAt: draft.startedAt,
   };
 }

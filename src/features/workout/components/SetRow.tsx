@@ -84,7 +84,7 @@ export function SetRow({ index, set, onUpdate, onToggleDone, onRemove }: SetRowP
         type="button"
         aria-label="セットを削除"
         onClick={onRemove}
-        className="flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground/60 transition-colors hover:text-destructive"
+        className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
       >
         <X className="size-4" />
       </button>

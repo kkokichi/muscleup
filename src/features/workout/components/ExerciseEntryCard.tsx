@@ -38,6 +38,11 @@ export function ExerciseEntryCard({
     }
   };
 
+  const handleRemoveSet = (setIndex: number) => {
+    if (!window.confirm("このセットを削除しますか？")) return;
+    removeSet(entry.exerciseId, setIndex);
+  };
+
   return (
     <Card className="border-border bg-card">
       <CardHeader className="flex-row items-start justify-between gap-2 pb-2">
@@ -80,16 +85,22 @@ export function ExerciseEntryCard({
             </div>
           </div>
         )}
-        {entry.sets.map((set, i) => (
-          <SetRow
-            key={i}
-            index={i}
-            set={set}
-            onUpdate={(patch) => updateSet(entry.exerciseId, i, patch)}
-            onToggleDone={() => handleToggleDone(i)}
-            onRemove={() => removeSet(entry.exerciseId, i)}
-          />
-        ))}
+        {entry.sets.length > 0 ? (
+          entry.sets.map((set, i) => (
+            <SetRow
+              key={i}
+              index={i}
+              set={set}
+              onUpdate={(patch) => updateSet(entry.exerciseId, i, patch)}
+              onToggleDone={() => handleToggleDone(i)}
+              onRemove={() => handleRemoveSet(i)}
+            />
+          ))
+        ) : (
+          <div className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+            セットがありません。下のボタンから追加できます。
+          </div>
+        )}
         <Button
           variant="secondary"
           className="mt-2 w-full"

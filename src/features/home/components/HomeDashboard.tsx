@@ -19,7 +19,8 @@ import { RecentWorkoutsList } from "./RecentWorkoutsList";
 import { ReminderNudge } from "./ReminderNudge";
 import { HomeQuickLinks } from "./HomeQuickLinks";
 import { VolumeSummaryCard } from "./VolumeSummaryCard";
-import { MonthlyCalendarCard } from "./MonthlyCalendarCard";
+import { MascotEvolutionCard } from "./MascotEvolutionCard";
+import { DailyQuestCard } from "./DailyQuestCard";
 
 const settingsAction = (
   <Link
@@ -90,15 +91,18 @@ export function HomeDashboard() {
           />
         </FadeIn>
         <FadeIn delay={0.15}>
-          <HomeQuickLinks />
+          <MascotEvolutionCard totalXp={stats.xp} levelInfo={stats.levelInfo} />
         </FadeIn>
         <FadeIn delay={0.2}>
-          <VolumeSummaryCard logs={stats.logs} />
+          <DailyQuestCard logs={stats.logs} />
         </FadeIn>
         <FadeIn delay={0.25}>
-          <MonthlyCalendarCard logs={stats.logs} />
+          <HomeQuickLinks />
         </FadeIn>
         <FadeIn delay={0.3}>
+          <VolumeSummaryCard logs={stats.logs} />
+        </FadeIn>
+        <FadeIn delay={0.35}>
           <RecentWorkoutsList logs={stats.recentLogs} exerciseById={byId} />
         </FadeIn>
       </div>

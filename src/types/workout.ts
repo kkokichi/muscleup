@@ -60,6 +60,8 @@ export interface DraftEntry {
 }
 
 export interface WorkoutDraft {
+  /** 保存済みログへupsertするための安定ID */
+  activeLogId?: string;
   /** YYYY-MM-DD */
   date: string;
   /** ISO 8601 — 所要時間の起点 */

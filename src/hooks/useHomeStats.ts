@@ -15,6 +15,7 @@ export interface HomeStats {
   records: ExerciseRecord[];
   streak: number;
   weekly: WeeklyStats;
+  xp: number;
   levelInfo: LevelInfo;
   levelTitle: string;
   /** 自己ベスト更新の累計回数 */
@@ -64,6 +65,7 @@ export function useHomeStats() {
       records,
       streak: calcStreak(logs),
       weekly: calcWeeklyStats(logs),
+      xp: profile?.xp ?? 0,
       levelInfo,
       levelTitle: titleForLevel(levelInfo.level),
       pbCount: records.reduce((sum, r) => sum + r.updatedCount, 0),

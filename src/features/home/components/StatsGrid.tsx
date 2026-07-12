@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Flame, Trophy, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { LevelInfo } from "@/services/levelService";
@@ -37,13 +38,15 @@ export function StatsGrid({ streak, levelInfo, levelTitle, pbCount }: StatsGridP
         </CardContent>
       </Card>
 
-      <Card className="border-border bg-card">
-        <CardContent className="flex flex-col items-center gap-1 p-3.5">
-          <Trophy className="size-5 text-yellow-400" />
-          <p className="text-xl font-bold tabular-nums">{pbCount}</p>
-          <p className="text-[10px] text-muted-foreground">ベスト更新</p>
-        </CardContent>
-      </Card>
+      <Link href="/achievements" aria-label="ベスト更新詳細">
+        <Card className="h-full border-border bg-card transition-colors active:bg-secondary/50">
+          <CardContent className="flex flex-col items-center gap-1 p-3.5">
+            <Trophy className="size-5 text-yellow-400" />
+            <p className="text-xl font-bold tabular-nums">{pbCount}</p>
+            <p className="text-[10px] text-muted-foreground">ベスト更新</p>
+          </CardContent>
+        </Card>
+      </Link>
     </div>
   );
 }

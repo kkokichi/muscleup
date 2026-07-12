@@ -7,15 +7,9 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { useHasMounted } from "@/hooks/useHasMounted";
 import { useWorkoutLogs } from "@/hooks/useWorkoutLogs";
 import { useExercises } from "@/hooks/useExercises";
-import {
-  calcLogSetCount,
-  calcLogVolume,
-  calcLongestStreak,
-  calcStreak,
-} from "@/services/statsService";
+import { calcLogSetCount, calcLogVolume } from "@/services/statsService";
 import { formatDateJa } from "@/utils/date";
 import { Mascot } from "@/features/mascot/components/Mascot";
-import { TrainingHeatmap } from "@/features/calendar/components/TrainingHeatmap";
 
 export function HistoryList() {
   const mounted = useHasMounted();
@@ -47,26 +41,6 @@ export function HistoryList() {
         </Card>
       ) : (
         <>
-          <Card className="mb-4 border-border bg-card">
-            <CardContent className="p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm font-semibold">トレーニングカレンダー</p>
-                <p className="text-[11px] text-muted-foreground">
-                  現在
-                  <span className="mx-1 font-bold text-primary tabular-nums">
-                    {calcStreak(logs)}
-                  </span>
-                  日連続 · 最長
-                  <span className="mx-1 font-bold text-foreground tabular-nums">
-                    {calcLongestStreak(logs)}
-                  </span>
-                  日
-                </p>
-              </div>
-              <TrainingHeatmap logs={logs} />
-            </CardContent>
-          </Card>
-
           <div className="space-y-2">
           {logs.map((log) => {
             const names = log.entries

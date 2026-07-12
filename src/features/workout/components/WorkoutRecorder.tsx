@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, MapPin, Plus } from "lucide-react";
+import { CheckCircle2, Clock, CloudOff, Loader2, MapPin, Plus } from "lucide-react";
 import type { CheckinDraft, DraftSet, WorkoutEntry, WorkoutLog } from "@/types";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -18,7 +18,8 @@ import { calcCategoryLastTrained } from "@/services/statsService";
 import { formatDateJa, formatElapsed, minutesSince } from "@/utils/date";
 import { useCheckins } from "@/features/checkin/hooks/useCheckins";
 import { CheckinComposer } from "@/features/checkin/components/CheckinComposer";
-import { useSaveWorkout } from "../hooks/useSaveWorkout";
+import type { AutoSaveStatus } from "../hooks/useAutoSaveWorkout";
+import { useAutoSaveWorkout } from "../hooks/useAutoSaveWorkout";
 import { ExerciseEntryCard } from "./ExerciseEntryCard";
 import { ExercisePickerSheet } from "./ExercisePickerSheet";
 import { RestTimerBar } from "./RestTimerBar";
@@ -36,13 +37,69 @@ function lastSessionFor(
   return null;
 }
 
+function SaveStatusPill({
+  status,
+  lastSavedAt,
+}: {
+  status: AutoSaveStatus;
+  lastSavedAt: Date | null;
+}) {
+  if (status === "saving") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+        <Loader2 className="size-3.5 animate-spin" />
+        保存中…
+      </span>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive">
+        保存に失敗
+      </span>
+    );
+  }
+
+  if (status === "offline") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+        <CloudOff className="size-3.5" />
+        オフライン保存済み
+      </span>
+    );
+  }
+
+  if (status === "saved") {
+    const savedAt = lastSavedAt
+      ? ` ${lastSavedAt.toLocaleTimeString("ja-JP", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`
+      : "";
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+        <CheckCircle2 className="size-3.5" />
+        保存済み{savedAt}
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+      入力待ち
+    </span>
+  );
+}
+
 export function WorkoutRecorder() {
   const mounted = useHasMounted();
   const router = useRouter();
-  const { draft, startWorkout, addExercise, setNote } = useWorkoutDraftStore();
+  const { draft, startWorkout, ensureActiveLogId, addExercise, setNote, clear } =
+    useWorkoutDraftStore();
   const { exercises, byId } = useExercises();
   const { logs } = useWorkoutLogs();
-  const { saveWorkout, isSaving } = useSaveWorkout(byId);
+  const { status: saveStatus, lastSavedAt, saveNow } = useAutoSaveWorkout(draft);
   const { name, saveName } = useUserName();
   const { addCheckin } = useCheckins();
   const { user } = useAuthUser();
@@ -53,8 +110,10 @@ export function WorkoutRecorder() {
   const [, setTick] = useState(0);
 
   useEffect(() => {
-    if (mounted && !useWorkoutDraftStore.getState().draft) startWorkout();
-  }, [mounted, startWorkout]);
+    if (!mounted) return;
+    if (!useWorkoutDraftStore.getState().draft) startWorkout();
+    else ensureActiveLogId();
+  }, [mounted, startWorkout, ensureActiveLogId]);
 
   useEffect(() => {
     const timer = setInterval(() => setTick((t) => t + 1), 30_000);
@@ -85,7 +144,6 @@ export function WorkoutRecorder() {
   if (!mounted || !draft) return null;
 
   const elapsed = minutesSince(draft.startedAt);
-  const canSave = draft.entries.some((e) => e.sets.some((s) => s.reps > 0));
 
   const handleSelectExercise = (exerciseId: string) => {
     const prev = lastSessionFor(logs, exerciseId);
@@ -98,9 +156,10 @@ export function WorkoutRecorder() {
     setPickerOpen(false);
   };
 
-  const handleSave = async () => {
-    const saved = await saveWorkout(draft);
-    if (saved) router.push("/");
+  const handleFinish = async () => {
+    await saveNow();
+    clear();
+    router.push("/");
   };
 
   return (
@@ -109,8 +168,13 @@ export function WorkoutRecorder() {
         title="ワークアウト"
         subtitle={formatDateJa(draft.date)}
         action={
-          <Button size="lg" disabled={!canSave || isSaving} onClick={handleSave}>
-            {isSaving ? "保存中…" : "完了"}
+          <Button
+            size="lg"
+            variant="secondary"
+            disabled={saveStatus === "saving"}
+            onClick={handleFinish}
+          >
+            終了
           </Button>
         }
       />
@@ -120,16 +184,19 @@ export function WorkoutRecorder() {
           <Clock className="size-3.5" />
           <span className="tabular-nums">経過 {elapsed}分</span>
         </div>
-        {user && (
-          <button
-            type="button"
-            onClick={() => setCheckinOpen(true)}
-            className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground transition-colors active:bg-secondary/70"
-          >
-            <MapPin className="size-3.5 text-primary" />
-            チェックイン
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <SaveStatusPill status={saveStatus} lastSavedAt={lastSavedAt} />
+          {user && (
+            <button
+              type="button"
+              onClick={() => setCheckinOpen(true)}
+              className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground transition-colors active:bg-secondary/70"
+            >
+              <MapPin className="size-3.5 text-primary" />
+              チェックイン
+            </button>
+          )}
+        </div>
       </div>
 
       <RestTimerBar />
@@ -146,15 +213,17 @@ export function WorkoutRecorder() {
           </FadeIn>
         ))}
 
-        <Button
-          variant="outline"
-          size="lg"
-          className="w-full border-dashed"
-          onClick={() => setPickerOpen(true)}
-        >
-          <Plus className="size-4" data-icon="inline-start" />
-          種目を追加
-        </Button>
+        {draft.entries.length === 0 && (
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full border-dashed"
+            onClick={() => setPickerOpen(true)}
+          >
+            <Plus className="size-4" data-icon="inline-start" />
+            種目を追加
+          </Button>
+        )}
 
         <textarea
           value={draft.note}
@@ -163,6 +232,17 @@ export function WorkoutRecorder() {
           rows={3}
           className="w-full resize-none rounded-2xl border border-border bg-card p-4 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
         />
+      </div>
+
+      <div className="pointer-events-none fixed inset-x-0 bottom-[88px] z-30 mx-auto max-w-md px-4">
+        <Button
+          size="lg"
+          className="pointer-events-auto w-full shadow-[0_18px_40px_rgba(0,0,0,0.25)]"
+          onClick={() => setPickerOpen(true)}
+        >
+          <Plus className="size-4" data-icon="inline-start" />
+          種目を追加
+        </Button>
       </div>
 
       <ExercisePickerSheet
