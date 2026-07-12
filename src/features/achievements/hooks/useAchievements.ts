@@ -4,22 +4,27 @@ import { useEffect, useState } from "react";
 import type { AchievementProgress } from "@/types";
 import { getRepos } from "@/repositories";
 import { localBodyMetricRepository } from "@/repositories/local/localBodyMetricRepository";
-import { readStorage, writeStorage } from "@/repositories/local/storage";
 import {
   evaluateAchievements,
   type AchievementContext,
 } from "@/services/achievementService";
+import {
+  readAchievementUnlockedAt,
+  readBadgeUnlockHistory,
+  recordAchievementUnlocks,
+} from "@/services/gamificationStorageService";
 import { calcLongestStreak, calcLogVolume } from "@/services/statsService";
 import { levelFromXp } from "@/services/levelService";
 import { useMascotStore } from "@/stores/mascotStore";
-
-const UNLOCKED_KEY = "achievementsUnlockedAt";
 
 /**
  * 実績の進捗を算出し、新規獲得を永続化＋マスコットで祝福する。
  */
 export function useAchievements() {
   const [progress, setProgress] = useState<AchievementProgress[]>([]);
+  const [badgeHistory, setBadgeHistory] = useState(() =>
+    readBadgeUnlockHistory(8),
+  );
   const [isLoading, setIsLoading] = useState(true);
   const speak = useMascotStore((s) => s.speak);
 
@@ -60,24 +65,24 @@ export function useAchievements() {
         checkinCount: checkins.length,
       };
 
-      const unlockedAt = readStorage<Record<string, string>>(UNLOCKED_KEY, {});
+      const unlockedAt = readAchievementUnlockedAt();
       const evaluated = evaluateAchievements(ctx, unlockedAt);
 
       // 新規獲得を検出して日時を記録
       const now = new Date().toISOString();
-      const newlyUnlocked = evaluated.filter(
-        (p) => p.unlocked && !unlockedAt[p.achievement.id],
-      );
+      const { unlockedAtMap, newlyUnlocked, badgeUnlocks } =
+        recordAchievementUnlocks(evaluated, unlockedAt, now);
       if (newlyUnlocked.length > 0) {
-        for (const p of newlyUnlocked) unlockedAt[p.achievement.id] = now;
-        writeStorage(UNLOCKED_KEY, unlockedAt);
         // 初回獲得の記録日時を反映
         for (const p of evaluated) {
-          if (p.unlocked && !p.unlockedAt) p.unlockedAt = unlockedAt[p.achievement.id];
+          if (p.unlocked && !p.unlockedAt) {
+            p.unlockedAt = unlockedAtMap[p.achievement.id];
+          }
         }
       }
 
       setProgress(evaluated);
+      setBadgeHistory(badgeUnlocks.slice(0, 8));
       setIsLoading(false);
 
       // 新規獲得を祝福（最初の1件）
@@ -92,5 +97,5 @@ export function useAchievements() {
 
   const unlockedCount = progress.filter((p) => p.unlocked).length;
 
-  return { progress, unlockedCount, total: progress.length, isLoading };
+  return { progress, badgeHistory, unlockedCount, total: progress.length, isLoading };
 }

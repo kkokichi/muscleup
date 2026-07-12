@@ -17,3 +17,11 @@ export interface MascotMessage {
 }
 
 export type MascotMood = "happy" | "excited" | "cheering" | "sleeping";
+
+export type MascotVariant =
+  | "default"
+  | "egg"
+  | "rookie"
+  | "power"
+  | "athlete"
+  | "legend";

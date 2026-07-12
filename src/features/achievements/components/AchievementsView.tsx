@@ -9,10 +9,12 @@ import { useRecords } from "@/hooks/useRecords";
 import { useAchievements } from "../hooks/useAchievements";
 import { AchievementBadge } from "./AchievementBadge";
 import { PersonalRecordsList } from "./PersonalRecordsList";
+import { BadgeUnlockHistory } from "./BadgeUnlockHistory";
 
 export function AchievementsView() {
   const mounted = useHasMounted();
-  const { progress, unlockedCount, total, isLoading } = useAchievements();
+  const { progress, badgeHistory, unlockedCount, total, isLoading } =
+    useAchievements();
   const { records, isLoading: recordsLoading } = useRecords();
   const { byId, isLoading: exercisesLoading } = useExercises();
 
@@ -41,6 +43,8 @@ export function AchievementsView() {
       <div className="mb-5">
         <PersonalRecordsList records={records} exerciseById={byId} />
       </div>
+
+      <BadgeUnlockHistory history={badgeHistory} />
 
       <Card className="mb-4 border-border bg-card">
         <CardContent className="p-4">

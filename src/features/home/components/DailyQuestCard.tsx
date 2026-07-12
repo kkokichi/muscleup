@@ -6,11 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { WorkoutLog } from "@/types";
-import { buildDailyQuests } from "@/services/questService";
+import { formatDateShort } from "@/utils/date";
 import { cn } from "@/lib/utils";
+import { useDailyQuestProgress } from "../hooks/useDailyQuestProgress";
 
 export function DailyQuestCard({ logs }: { logs: WorkoutLog[] }) {
-  const quests = buildDailyQuests(logs);
+  const { quests, history, newlyCompletedCount } = useDailyQuestProgress(logs);
   const completedCount = quests.filter((quest) => quest.completed).length;
   const completedXp = quests.reduce(
     (sum, quest) => sum + (quest.completed ? quest.xp : 0),
@@ -66,7 +67,7 @@ export function DailyQuestCard({ logs }: { logs: WorkoutLog[] }) {
         {completedCount === quests.length ? (
           <div className="mt-3 flex items-center gap-2 rounded-2xl bg-primary/10 px-3 py-2 text-xs font-semibold text-primary">
             <Gift className="size-4" />
-            本日のクエスト達成。バッジ獲得ッス。
+            本日のクエスト達成。履歴に保存済みッス。
           </div>
         ) : (
           <Link
@@ -76,6 +77,35 @@ export function DailyQuestCard({ logs }: { logs: WorkoutLog[] }) {
             クエストを進める
           </Link>
         )}
+
+        {newlyCompletedCount > 0 && (
+          <div className="mt-3 rounded-2xl bg-primary/10 px-3 py-2 text-xs font-semibold text-primary">
+            新しく{newlyCompletedCount}件のクエストを達成しました。
+          </div>
+        )}
+
+        <div className="mt-4 border-t border-border/60 pt-3">
+          <p className="mb-2 text-xs font-bold">達成履歴</p>
+          {history.length === 0 ? (
+            <p className="rounded-2xl bg-secondary/60 px-3 py-3 text-center text-xs text-muted-foreground">
+              今日のクエストを達成すると履歴が残ります。
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              {history.slice(0, 3).map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between rounded-xl bg-secondary/60 px-3 py-2 text-xs"
+                >
+                  <span className="truncate font-semibold">{item.title}</span>
+                  <span className="ml-2 shrink-0 text-muted-foreground">
+                    {formatDateShort(item.date)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

@@ -7,3 +7,4 @@ export * from "./mascot";
 export * from "./community";
 export * from "./body";
 export * from "./achievement";
+export * from "./gamification";
