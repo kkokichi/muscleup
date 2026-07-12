@@ -1,4 +1,10 @@
-import { getSignedInUser, isFirebaseConfigured } from "@/lib/firebase";
+import {
+  clearKnownGoogleSession,
+  getSignedInUser,
+  hasKnownGoogleSession,
+  isFirebaseConfigured,
+  isNotSignedInError,
+} from "@/lib/firebase";
 import type { Repositories } from "./interfaces";
 import { localWorkoutLogRepository } from "./local/localWorkoutLogRepository";
 import { localExerciseRepository } from "./local/localExerciseRepository";
@@ -25,7 +31,8 @@ let reposPromise: Promise<Repositories> | null = null;
 /**
  * Repository Factory（ハイブリッド構成）。
  *
- * - 共有データ（チェックイン・アドバイス）: Firebase設定時は Firestore。
+ * - 未ログイン時: Firebaseを待たず、端末ローカルを即返す。
+ * - 共有データ（チェックイン・アドバイス）: Googleログイン中は Firestore。
  * - 個人データ（記録・自己ベスト・プロフィール・テンプレート・カスタム種目）:
  *   Googleログイン中はアカウント（Firestore users/{uid}）に保存。
  *   未ログイン時は端末ローカル（localStorage）。
@@ -43,26 +50,30 @@ export function getRepos(): Promise<Repositories> {
 async function resolve(): Promise<Repositories> {
   const repos: Repositories = { ...localRepositories };
 
-  if (isFirebaseConfigured()) {
-    try {
-      const mod = await import("./firestore");
-      const firestore = mod.createFirestoreRepositories();
-      // 共有データは常に Firestore
-      repos.checkins = firestore.checkins;
-      repos.advice = firestore.advice;
+  if (!isFirebaseConfigured() || !hasKnownGoogleSession()) {
+    return repos;
+  }
 
-      // Googleログイン中は個人データもアカウントに保存
-      const user = await getSignedInUser();
-      if (user) {
-        repos.workoutLogs = firestore.workoutLogs;
-        repos.records = firestore.records;
-        repos.userProfile = firestore.userProfile;
-        repos.workoutTemplates = firestore.workoutTemplates;
-        repos.exercises = firestore.exercises;
-      }
-    } catch (error) {
-      console.error("Firestore初期化に失敗。ローカルで継続します", error);
+  try {
+    const user = await getSignedInUser();
+    if (!user) return repos;
+
+    const mod = await import("./firestore");
+    const firestore = mod.createFirestoreRepositories();
+
+    repos.workoutLogs = firestore.workoutLogs;
+    repos.records = firestore.records;
+    repos.userProfile = firestore.userProfile;
+    repos.workoutTemplates = firestore.workoutTemplates;
+    repos.exercises = firestore.exercises;
+    repos.checkins = firestore.checkins;
+    repos.advice = firestore.advice;
+  } catch (error) {
+    if (isNotSignedInError(error)) {
+      clearKnownGoogleSession();
+      return repos;
     }
+    console.error("Firestore初期化に失敗。ローカルで継続します", error);
   }
 
   return repos;

@@ -27,6 +27,23 @@ const DEFAULT_FIREBASE_CONFIG = {
   appId: "1:411709345538:web:5ac3850bdbac106af53c1b",
 } as const;
 
+const GOOGLE_SESSION_KEY = "muscleup:v1:googleSession";
+
+function rememberGoogleSession(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(GOOGLE_SESSION_KEY, "true");
+}
+
+export function clearKnownGoogleSession(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(GOOGLE_SESSION_KEY);
+}
+
+export function hasKnownGoogleSession(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(GOOGLE_SESSION_KEY) === "true";
+}
+
 function getFirebaseConfig() {
   return {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || DEFAULT_FIREBASE_CONFIG.apiKey,
@@ -115,6 +132,7 @@ export function subscribeAuth(cb: (user: User | null) => void): () => void {
 export async function signInWithGoogle(): Promise<User> {
   const provider = new GoogleAuthProvider();
   const credential = await signInWithPopup(getAuth(getFirebaseApp()), provider);
+  rememberGoogleSession();
   return credential.user;
 }
 
@@ -126,11 +144,13 @@ export async function signInWithGoogleRedirect(): Promise<void> {
 /** リダイレクト方式のログインから戻ってきた場合、そのユーザーを返す */
 export async function getGoogleRedirectResult(): Promise<User | null> {
   const result = await getRedirectResult(getAuth(getFirebaseApp()));
+  if (result?.user) rememberGoogleSession();
   return result?.user ?? null;
 }
 
 export async function signOutUser(): Promise<void> {
   await signOut(getAuth(getFirebaseApp()));
+  clearKnownGoogleSession();
 }
 
 /** ポップアップ失敗時にリダイレクトへフォールバックすべきエラーか */
