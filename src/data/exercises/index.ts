@@ -5,6 +5,7 @@ import { SHOULDER_EXERCISES } from "./shoulders";
 import { LEG_EXERCISES } from "./legs";
 import { ARM_EXERCISES } from "./arms";
 import { CORE_EXERCISES } from "./core";
+import { POPULAR_EXERCISES } from "./popular";
 
 /** シード種目マスタ（全部位） */
 export const SEED_EXERCISES: Exercise[] = [
@@ -14,4 +15,5 @@ export const SEED_EXERCISES: Exercise[] = [
   ...LEG_EXERCISES,
   ...ARM_EXERCISES,
   ...CORE_EXERCISES,
+  ...POPULAR_EXERCISES,
 ];
