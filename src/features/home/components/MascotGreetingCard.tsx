@@ -35,7 +35,7 @@ export function MascotGreetingCard(props: MascotGreetingCardProps) {
           <div className="flex-1">
             <MascotBubble text={message.text} />
             <p className="mt-1 text-[10px] font-semibold text-primary">
-              マッスーページへ
+              まっすーを鍛えよう！
             </p>
           </div>
         </CardContent>
