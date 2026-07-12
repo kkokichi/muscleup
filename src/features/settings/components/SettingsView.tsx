@@ -4,6 +4,7 @@ import { Bell, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DisplayNameInput } from "@/components/common/DisplayNameInput";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useHasMounted } from "@/hooks/useHasMounted";
 import { useUserName } from "@/hooks/useUserName";
 import { useReminderSettings } from "../hooks/useReminderSettings";
@@ -20,6 +21,7 @@ export function SettingsView() {
 
       <div className="space-y-4">
         <AccountSection />
+        <ThemeToggle />
 
         <Card className="border-border bg-card">
           <CardContent className="p-4">

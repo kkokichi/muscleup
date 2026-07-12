@@ -49,11 +49,42 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/*
- * MuscleUp テーマ — 黒基調 + ライムグリーン（docs/12-design-guidelines.md）
- * ダークモードを標準とするため :root と .dark は同一パレット。
- */
-:root,
+/* MuscleUp theme tokens. Default is light; .dark keeps the black gym look. */
+:root {
+  --background: #f7f7f8;
+  --foreground: #111113;
+  --card: #ffffff;
+  --card-foreground: #111113;
+  --popover: #ffffff;
+  --popover-foreground: #111113;
+  --primary: #7fb000;
+  --primary-foreground: #ffffff;
+  --secondary: #ececf0;
+  --secondary-foreground: #111113;
+  --muted: #eeeeF1;
+  --muted-foreground: #6b6b72;
+  --accent: #e9f7bf;
+  --accent-foreground: #111113;
+  --destructive: #d92d20;
+  --border: #dedee3;
+  --input: #d6d6dc;
+  --ring: rgba(127, 176, 0, 0.45);
+  --chart-1: #7fb000;
+  --chart-2: #f97316;
+  --chart-3: #0284c7;
+  --chart-4: #7c3aed;
+  --chart-5: #e11d48;
+  --radius: 1rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111113;
+  --sidebar-primary: #7fb000;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ececf0;
+  --sidebar-accent-foreground: #111113;
+  --sidebar-border: #dedee3;
+  --sidebar-ring: rgba(127, 176, 0, 0.45);
+}
+
 .dark {
   --background: #0a0a0b;
   --foreground: #f5f5f7;
