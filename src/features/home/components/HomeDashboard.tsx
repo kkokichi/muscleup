@@ -19,8 +19,7 @@ import { RecentWorkoutsList } from "./RecentWorkoutsList";
 import { ReminderNudge } from "./ReminderNudge";
 import { HomeQuickLinks } from "./HomeQuickLinks";
 import { VolumeSummaryCard } from "./VolumeSummaryCard";
-import { MascotEvolutionCard } from "./MascotEvolutionCard";
-import { DailyQuestCard } from "./DailyQuestCard";
+import { MonthlyCalendarCard } from "./MonthlyCalendarCard";
 
 const settingsAction = (
   <Link
@@ -83,6 +82,12 @@ export function HomeDashboard() {
           />
         </FadeIn>
         <FadeIn delay={0.1}>
+          <div className="grid grid-cols-2 gap-3">
+            <MonthlyCalendarCard logs={stats.logs} />
+            <VolumeSummaryCard logs={stats.logs} variant="compact" />
+          </div>
+        </FadeIn>
+        <FadeIn delay={0.15}>
           <StatsGrid
             streak={stats.streak}
             levelInfo={stats.levelInfo}
@@ -90,19 +95,10 @@ export function HomeDashboard() {
             pbCount={stats.pbCount}
           />
         </FadeIn>
-        <FadeIn delay={0.15}>
-          <MascotEvolutionCard totalXp={stats.xp} levelInfo={stats.levelInfo} />
-        </FadeIn>
-        <FadeIn delay={0.2}>
-          <DailyQuestCard logs={stats.logs} />
-        </FadeIn>
         <FadeIn delay={0.25}>
           <HomeQuickLinks />
         </FadeIn>
         <FadeIn delay={0.3}>
-          <VolumeSummaryCard logs={stats.logs} />
-        </FadeIn>
-        <FadeIn delay={0.35}>
           <RecentWorkoutsList logs={stats.recentLogs} exerciseById={byId} />
         </FadeIn>
       </div>

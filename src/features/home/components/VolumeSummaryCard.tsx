@@ -6,12 +6,57 @@ import {
   formatVolume,
 } from "@/services/statsService";
 
+interface VolumeSummaryCardProps {
+  logs: WorkoutLog[];
+  variant?: "full" | "compact";
+}
+
 /** 総負荷量サマリー（7日/28日/累計 + 週別バー） */
-export function VolumeSummaryCard({ logs }: { logs: WorkoutLog[] }) {
+export function VolumeSummaryCard({
+  logs,
+  variant = "full",
+}: VolumeSummaryCardProps) {
   const summary = calcVolumeSummary(logs);
   const maxWeek = Math.max(1, summary.weekTarget);
   const bestGap = Math.max(0, summary.bestWeek - summary.last7);
   const currentWeek = summary.weeks[0]?.volume ?? 0;
+
+  if (variant === "compact") {
+    return (
+      <Card className="h-full border-border bg-card">
+        <CardContent className="flex h-full flex-col p-3">
+          <div className="mb-2">
+            <p className="text-xs font-bold">合計負荷量</p>
+            <p className="text-[10px] text-muted-foreground">7日間</p>
+          </div>
+          <p className="text-lg font-black text-primary tabular-nums">
+            {formatVolume(summary.last7)}
+          </p>
+          <p className="mt-0.5 text-[10px] font-semibold text-muted-foreground tabular-nums">
+            前7日比 {formatSignedVolume(summary.last7Delta)}
+          </p>
+          <div className="mt-3 space-y-1">
+            {summary.weeks.slice(0, 3).map((w) => (
+              <div key={w.label} className="flex items-center gap-1.5">
+                <span className="w-8 shrink-0 text-[9px] text-muted-foreground">
+                  {w.label}
+                </span>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${Math.min(100, (w.volume / maxWeek) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-auto pt-2 text-[10px] text-muted-foreground">
+            今週 {formatVolume(currentWeek)}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-border bg-card">

@@ -99,7 +99,7 @@ export function CustomExerciseSheet({
       {open && (
         <motion.div
           key="custom-overlay"
-          className="fixed inset-0 z-40 bg-black/60"
+          className="fixed inset-0 z-50 bg-black/60"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -109,7 +109,7 @@ export function CustomExerciseSheet({
       {open && (
         <motion.div
           key="custom-sheet"
-          className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[88dvh] max-w-md flex-col overflow-y-auto rounded-t-3xl border-t border-border bg-popover"
+          className="fixed inset-x-0 bottom-0 z-[60] mx-auto flex max-h-[88dvh] max-w-md flex-col overflow-y-auto rounded-t-3xl border-t border-border bg-popover"
           initial={{ y: "100%" }}
           animate={{ y: 0 }}
           exit={{ y: "100%" }}

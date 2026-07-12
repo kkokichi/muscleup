@@ -97,7 +97,7 @@ export function WorkoutRecorder() {
   const router = useRouter();
   const { draft, startWorkout, ensureActiveLogId, addExercise, setNote, clear } =
     useWorkoutDraftStore();
-  const { exercises, byId } = useExercises();
+  const { exercises, byId, reload: reloadExercises } = useExercises();
   const { logs } = useWorkoutLogs();
   const { status: saveStatus, lastSavedAt, saveNow } = useAutoSaveWorkout(draft);
   const { name, saveName } = useUserName();
@@ -252,6 +252,9 @@ export function WorkoutRecorder() {
         excludeIds={draft.entries.map((e) => e.exerciseId)}
         categoryElapsed={categoryElapsed}
         onSelect={(e) => handleSelectExercise(e.id)}
+        onCustomExerciseCreated={async () => {
+          await reloadExercises();
+        }}
         onClose={() => setPickerOpen(false)}
       />
 

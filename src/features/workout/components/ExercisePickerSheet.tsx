@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, X } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import type { Exercise, MuscleCategoryId } from "@/types";
 import { EXERCISE_CATEGORIES } from "@/data/categories";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { CustomExerciseSheet } from "@/features/exercises/components/CustomExerciseSheet";
 
 interface ExercisePickerSheetProps {
   open: boolean;
@@ -17,6 +19,7 @@ interface ExercisePickerSheetProps {
   /** 部位ごとの「何日何時間前」ラベル */
   categoryElapsed?: Record<string, string>;
   onSelect: (exercise: Exercise) => void;
+  onCustomExerciseCreated?: (exercise: Exercise) => void | Promise<void>;
   onClose: () => void;
 }
 
@@ -28,10 +31,12 @@ export function ExercisePickerSheet({
   excludeIds,
   categoryElapsed,
   onSelect,
+  onCustomExerciseCreated,
   onClose,
 }: ExercisePickerSheetProps) {
   const [keyword, setKeyword] = useState("");
   const [category, setCategory] = useState<MuscleCategoryId | null>(null);
+  const [customOpen, setCustomOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const rank = new Map(recentIds.map((id, i) => [id, i]));
@@ -109,6 +114,15 @@ export function ExercisePickerSheet({
                   />
                 ))}
               </div>
+              <Button
+                variant="secondary"
+                size="lg"
+                className="mt-3 w-full"
+                onClick={() => setCustomOpen(true)}
+              >
+                <Plus className="size-4" data-icon="inline-start" />
+                種目を新規追加
+              </Button>
             </div>
 
             <ul className="flex-1 overflow-y-auto px-3 pb-8">
@@ -132,11 +146,31 @@ export function ExercisePickerSheet({
                 </li>
               ))}
               {filtered.length === 0 && (
-                <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-                  該当する種目がありません
-                </p>
+                <div className="px-3 py-8 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    該当する種目がありません
+                  </p>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="mt-3"
+                    onClick={() => setCustomOpen(true)}
+                  >
+                    <Plus className="size-4" data-icon="inline-start" />
+                    この種目を追加
+                  </Button>
+                </div>
               )}
             </ul>
+            <CustomExerciseSheet
+              open={customOpen}
+              onClose={() => setCustomOpen(false)}
+              onCreated={async (exercise) => {
+                await onCustomExerciseCreated?.(exercise);
+                onSelect(exercise);
+                onClose();
+              }}
+            />
         </motion.div>
       )}
     </AnimatePresence>

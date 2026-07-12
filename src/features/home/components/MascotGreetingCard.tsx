@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { pickMascotMessage } from "@/services/mascotService";
 import { Mascot } from "@/features/mascot/components/Mascot";
@@ -27,13 +28,18 @@ export function MascotGreetingCard(props: MascotGreetingCardProps) {
   );
 
   return (
-    <Card className="border-border bg-gradient-to-br from-card to-secondary/40">
-      <CardContent className="flex items-center gap-3 p-4">
-        <Mascot mood={props.trainedToday ? "excited" : "happy"} size={84} />
-        <div className="flex-1">
-          <MascotBubble text={message.text} />
-        </div>
-      </CardContent>
-    </Card>
+    <Link href="/massu" className="block">
+      <Card className="border-border bg-gradient-to-br from-card to-secondary/40 transition-colors active:bg-secondary/50">
+        <CardContent className="flex items-center gap-3 p-4">
+          <Mascot mood={props.trainedToday ? "excited" : "happy"} size={84} />
+          <div className="flex-1">
+            <MascotBubble text={message.text} />
+            <p className="mt-1 text-[10px] font-semibold text-primary">
+              マッスーページへ
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
