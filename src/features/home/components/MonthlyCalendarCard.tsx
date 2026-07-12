@@ -68,8 +68,8 @@ export function MonthlyCalendarCard({ logs }: { logs: WorkoutLog[] }) {
             return (
               <Link
                 key={day.iso}
-                href={`/history?date=${day.iso}`}
-                aria-label={`${day.iso}の記録一覧`}
+                href={`/history/detail?date=${day.iso}`}
+                aria-label={`${day.iso}の記録詳細`}
                 className={cn(
                   "flex aspect-square items-center justify-center rounded-md text-[9px] font-semibold tabular-nums transition-transform active:scale-95",
                   active
