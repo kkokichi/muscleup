@@ -1,16 +1,12 @@
 "use client";
 
 import { Award } from "lucide-react";
+import Link from "next/link";
 import type { BadgeUnlock } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDateShort } from "@/utils/date";
-
-const TIER_LABEL = {
-  bronze: "Bronze",
-  silver: "Silver",
-  gold: "Gold",
-} as const;
+import { TIER_LABEL } from "./achievementVisuals";
 
 export function BadgeUnlockHistory({ history }: { history: BadgeUnlock[] }) {
   return (
@@ -33,8 +29,9 @@ export function BadgeUnlockHistory({ history }: { history: BadgeUnlock[] }) {
         ) : (
           <div className="space-y-2">
             {history.slice(0, 5).map((item) => (
-              <div
+              <Link
                 key={item.id}
+                href={`/achievements/detail?id=${item.achievementId}`}
                 className="flex items-center gap-3 rounded-2xl bg-secondary/60 px-3 py-2.5"
               >
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -49,7 +46,7 @@ export function BadgeUnlockHistory({ history }: { history: BadgeUnlock[] }) {
                 <span className="rounded-full bg-background/70 px-2 py-1 text-[10px] font-bold text-muted-foreground">
                   {TIER_LABEL[item.tier]}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         )}

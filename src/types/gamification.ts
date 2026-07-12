@@ -9,6 +9,15 @@ export interface QuestCompletion {
   completedAt: string;
 }
 
+export interface QuestStreakBonus {
+  id: string;
+  title: string;
+  streakDays: number;
+  xp: number;
+  date: string;
+  awardedAt: string;
+}
+
 export interface BadgeUnlock {
   id: string;
   achievementId: string;

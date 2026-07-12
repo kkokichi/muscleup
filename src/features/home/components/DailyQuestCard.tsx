@@ -6,16 +6,27 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { WorkoutLog } from "@/types";
+import { QUEST_STREAK_BONUS_TIERS } from "@/services/questService";
 import { formatDateShort } from "@/utils/date";
 import { cn } from "@/lib/utils";
 import { useDailyQuestProgress } from "../hooks/useDailyQuestProgress";
 
 export function DailyQuestCard({ logs }: { logs: WorkoutLog[] }) {
-  const { quests, history, newlyCompletedCount } = useDailyQuestProgress(logs);
+  const {
+    quests,
+    history,
+    bonusHistory,
+    newBonus,
+    newlyCompletedCount,
+    perfectStreak,
+  } = useDailyQuestProgress(logs);
   const completedCount = quests.filter((quest) => quest.completed).length;
   const completedXp = quests.reduce(
     (sum, quest) => sum + (quest.completed ? quest.xp : 0),
     0,
+  );
+  const nextBonus = QUEST_STREAK_BONUS_TIERS.find(
+    (tier) => tier.streakDays > perfectStreak,
   );
 
   return (
@@ -31,6 +42,20 @@ export function DailyQuestCard({ logs }: { logs: WorkoutLog[] }) {
           <Badge variant={completedCount > 0 ? "default" : "secondary"}>
             +{completedXp} XP
           </Badge>
+        </div>
+
+        <div className="mb-3 rounded-2xl bg-secondary/60 px-3 py-2.5">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-bold">完全達成ストリーク</span>
+            <span className="font-black text-primary tabular-nums">
+              {perfectStreak}日
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {nextBonus
+              ? `次のボーナス: ${nextBonus.streakDays}日連続で +${nextBonus.xp} XP`
+              : "全ボーナス獲得済み。継続記録を伸ばそう。"}
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -84,6 +109,13 @@ export function DailyQuestCard({ logs }: { logs: WorkoutLog[] }) {
           </div>
         )}
 
+        {newBonus && (
+          <div className="mt-3 flex items-center gap-2 rounded-2xl bg-primary/10 px-3 py-2 text-xs font-semibold text-primary">
+            <Gift className="size-4" />
+            {newBonus.title}で +{newBonus.xp} XP ボーナス獲得
+          </div>
+        )}
+
         <div className="mt-4 border-t border-border/60 pt-3">
           <p className="mb-2 text-xs font-bold">達成履歴</p>
           {history.length === 0 ? (
@@ -106,6 +138,25 @@ export function DailyQuestCard({ logs }: { logs: WorkoutLog[] }) {
             </div>
           )}
         </div>
+
+        {bonusHistory.length > 0 && (
+          <div className="mt-4 border-t border-border/60 pt-3">
+            <p className="mb-2 text-xs font-bold">ボーナス履歴</p>
+            <div className="space-y-1.5">
+              {bonusHistory.slice(0, 2).map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between rounded-xl bg-secondary/60 px-3 py-2 text-xs"
+                >
+                  <span className="truncate font-semibold">{item.title}</span>
+                  <span className="ml-2 shrink-0 text-primary tabular-nums">
+                    +{item.xp} XP
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

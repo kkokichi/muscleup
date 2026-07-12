@@ -10,6 +10,18 @@ export interface DailyQuest {
   completed: boolean;
 }
 
+export const DAILY_QUEST_IDS = [
+  "record-one-exercise",
+  "complete-three-sets",
+  "beat-last-reps",
+] as const;
+
+export const QUEST_STREAK_BONUS_TIERS = [
+  { streakDays: 3, xp: 50, title: "3日連続クエスト達成" },
+  { streakDays: 7, xp: 150, title: "7日連続クエスト達成" },
+  { streakDays: 14, xp: 400, title: "14日連続クエスト達成" },
+] as const;
+
 function hasRepImprovement(todayLogs: WorkoutLog[], previousLogs: WorkoutLog[]): boolean {
   const previousBestReps = new Map<string, number>();
   for (const log of previousLogs) {

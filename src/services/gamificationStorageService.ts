@@ -3,23 +3,37 @@ import type {
   BadgeUnlock,
   MascotEvolutionRecord,
   QuestCompletion,
+  QuestStreakBonus,
 } from "@/types";
-import type { DailyQuest } from "@/services/questService";
+import {
+  DAILY_QUEST_IDS,
+  QUEST_STREAK_BONUS_TIERS,
+  type DailyQuest,
+} from "@/services/questService";
 import type { MascotEvolution } from "@/services/levelService";
 import { readStorage, writeStorage } from "@/repositories/local/storage";
+import { daysAgoISO } from "@/utils/date";
 
 const ACHIEVEMENT_UNLOCKED_KEY = "achievementsUnlockedAt";
 const BADGE_UNLOCKS_KEY = "badgeUnlocks";
 const QUEST_COMPLETIONS_KEY = "questCompletions";
+const QUEST_STREAK_BONUSES_KEY = "questStreakBonuses";
 const SEEN_MASCOT_STAGES_KEY = "seenMascotEvolutionStages";
 const MASCOT_EVOLUTION_HISTORY_KEY = "mascotEvolutionHistory";
 
-function newestFirst<T extends { completedAt?: string; unlockedAt?: string; evolvedAt?: string }>(
+function newestFirst<
+  T extends {
+    completedAt?: string;
+    unlockedAt?: string;
+    evolvedAt?: string;
+    awardedAt?: string;
+  },
+>(
   items: T[],
 ): T[] {
   return [...items].sort((a, b) => {
-    const left = a.completedAt ?? a.unlockedAt ?? a.evolvedAt ?? "";
-    const right = b.completedAt ?? b.unlockedAt ?? b.evolvedAt ?? "";
+    const left = a.completedAt ?? a.unlockedAt ?? a.evolvedAt ?? a.awardedAt ?? "";
+    const right = b.completedAt ?? b.unlockedAt ?? b.evolvedAt ?? b.awardedAt ?? "";
     return right.localeCompare(left);
   });
 }
@@ -110,6 +124,62 @@ export function recordQuestCompletions(
 export function readQuestCompletionHistory(limit?: number): QuestCompletion[] {
   const history = newestFirst(readStorage<QuestCompletion[]>(QUEST_COMPLETIONS_KEY, []));
   return typeof limit === "number" ? history.slice(0, limit) : history;
+}
+
+export function calcQuestPerfectStreak(
+  completions: QuestCompletion[],
+  today: string,
+): number {
+  const byDate = new Map<string, Set<string>>();
+  for (const item of completions) {
+    const questIds = byDate.get(item.date) ?? new Set<string>();
+    questIds.add(item.questId);
+    byDate.set(item.date, questIds);
+  }
+
+  const base = new Date(`${today}T00:00:00`);
+  let streak = 0;
+  for (let daysAgo = 0; daysAgo < 365; daysAgo++) {
+    const date = daysAgoISO(daysAgo, base);
+    const questIds = byDate.get(date);
+    const completedAll = DAILY_QUEST_IDS.every((id) => questIds?.has(id));
+    if (!completedAll) break;
+    streak++;
+  }
+  return streak;
+}
+
+export function readQuestStreakBonuses(limit?: number): QuestStreakBonus[] {
+  const history = newestFirst(
+    readStorage<QuestStreakBonus[]>(QUEST_STREAK_BONUSES_KEY, []),
+  );
+  return typeof limit === "number" ? history.slice(0, limit) : history;
+}
+
+export function recordQuestStreakBonusesIfNeeded(
+  streakDays: number,
+  date: string,
+  now: string,
+): { additions: QuestStreakBonus[]; history: QuestStreakBonus[] } {
+  const existing = readStorage<QuestStreakBonus[]>(QUEST_STREAK_BONUSES_KEY, []);
+  const existingIds = new Set(existing.map((item) => item.id));
+  const additions = QUEST_STREAK_BONUS_TIERS
+    .filter((tier) => streakDays >= tier.streakDays)
+    .map((tier) => ({
+      id: `quest-streak:${tier.streakDays}`,
+      title: tier.title,
+      streakDays: tier.streakDays,
+      xp: tier.xp,
+      date,
+      awardedAt: now,
+    }))
+    .filter((bonus) => !existingIds.has(bonus.id));
+
+  if (additions.length > 0) {
+    writeStorage(QUEST_STREAK_BONUSES_KEY, newestFirst([...existing, ...additions]));
+  }
+
+  return { additions, history: readQuestStreakBonuses() };
 }
 
 export function recordMascotEvolutionIfNeeded(

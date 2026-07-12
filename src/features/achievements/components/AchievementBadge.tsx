@@ -1,49 +1,22 @@
 "use client";
 
-import {
-  Crown,
-  Dumbbell,
-  Flame,
-  Layers,
-  Lock,
-  MapPin,
-  Mountain,
-  Scale,
-  Trophy,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
-import type { AchievementProgress, AchievementTier } from "@/types";
+import Link from "next/link";
+import { Lock, Trophy } from "lucide-react";
+import type { AchievementProgress } from "@/types";
 import { cn } from "@/lib/utils";
-
-const ICONS: Record<string, LucideIcon> = {
-  Dumbbell,
-  Flame,
-  Trophy,
-  Zap,
-  Crown,
-  Mountain,
-  Layers,
-  Scale,
-  MapPin,
-};
-
-const TIER_COLOR: Record<AchievementTier, string> = {
-  bronze: "#c58a5a",
-  silver: "#c4c8cc",
-  gold: "#ffd23f",
-};
+import { ACHIEVEMENT_ICONS, TIER_COLOR } from "./achievementVisuals";
 
 export function AchievementBadge({ item }: { item: AchievementProgress }) {
   const { achievement, unlocked, current } = item;
-  const Icon = ICONS[achievement.icon] ?? Trophy;
+  const Icon = ACHIEVEMENT_ICONS[achievement.icon] ?? Trophy;
   const color = TIER_COLOR[achievement.tier];
   const pct = Math.min(100, Math.round((current / achievement.conditionValue) * 100));
 
   return (
-    <div
+    <Link
+      href={`/achievements/detail?id=${achievement.id}`}
       className={cn(
-        "flex flex-col items-center rounded-2xl border p-3 text-center transition-colors",
+        "flex h-full flex-col items-center rounded-2xl border p-3 text-center transition-colors active:bg-secondary/50",
         unlocked ? "border-border bg-card" : "border-border/60 bg-card/40",
       )}
     >
@@ -84,6 +57,6 @@ export function AchievementBadge({ item }: { item: AchievementProgress }) {
           </p>
         </div>
       )}
-    </div>
+    </Link>
   );
 }

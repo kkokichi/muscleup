@@ -1,8 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Mascot } from "@/features/mascot/components/Mascot";
 import {
@@ -132,6 +134,13 @@ export function MascotEvolutionCard({
               : `次の進化まであと ${nextEvolutionXp.toLocaleString()} XP`}
           </p>
         </div>
+
+        <Link
+          href="/evolutions"
+          className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "mt-3 w-full")}
+        >
+          進化図鑑を見る
+        </Link>
       </CardContent>
     </Card>
   );
