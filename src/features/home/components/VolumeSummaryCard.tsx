@@ -25,32 +25,28 @@ export function VolumeSummaryCard({
     return (
       <Card className="h-full border-border bg-card">
         <CardContent className="flex h-full flex-col p-3">
-          <div className="mb-2">
-            <p className="text-xs font-bold">合計負荷量</p>
-            <p className="text-[10px] text-muted-foreground">7日間</p>
-          </div>
-          <p className="text-lg font-black text-primary tabular-nums">
+          <p className="text-[11px] font-bold leading-tight">合計負荷量</p>
+          <p className="text-[9px] text-muted-foreground">7日間</p>
+          <p className="mt-1 text-base font-black leading-tight text-primary tabular-nums">
             {formatVolume(summary.last7)}
           </p>
-          <p className="mt-0.5 text-[10px] font-semibold text-muted-foreground tabular-nums">
-            前7日比 {formatSignedVolume(summary.last7Delta)}
+          <p className="mt-0.5 text-[9px] font-semibold text-muted-foreground tabular-nums">
+            {formatSignedVolume(summary.last7Delta)}
           </p>
-          <div className="mt-3 space-y-1">
+          <div className="mt-2.5 space-y-1">
             {summary.weeks.slice(0, 3).map((w) => (
-              <div key={w.label} className="flex items-center gap-1.5">
-                <span className="w-8 shrink-0 text-[9px] text-muted-foreground">
-                  {w.label}
-                </span>
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
-                  <div
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${Math.min(100, (w.volume / maxWeek) * 100)}%` }}
-                  />
-                </div>
+              <div
+                key={w.label}
+                className="h-1.5 overflow-hidden rounded-full bg-secondary"
+              >
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${Math.min(100, (w.volume / maxWeek) * 100)}%` }}
+                />
               </div>
             ))}
           </div>
-          <div className="mt-auto pt-2 text-[10px] text-muted-foreground">
+          <div className="mt-auto pt-2 text-[9px] text-muted-foreground tabular-nums">
             今週 {formatVolume(currentWeek)}
           </div>
         </CardContent>

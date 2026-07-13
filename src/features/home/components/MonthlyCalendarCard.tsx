@@ -36,25 +36,25 @@ export function MonthlyCalendarCard({ logs }: { logs: WorkoutLog[] }) {
 
   return (
     <Card className="h-full border-border bg-card">
-      <CardContent className="p-3">
-        <div className="mb-2 flex items-center justify-between gap-2">
+      <CardContent className="p-3.5">
+        <div className="mb-2.5 flex items-center justify-between gap-2">
           <Link
             href="/history"
             className="flex items-center gap-1.5 transition-colors active:text-primary"
           >
             <CalendarDays className="size-4 text-primary" />
-            <p className="text-xs font-bold">{month.label}</p>
+            <p className="text-sm font-bold">{month.label}</p>
           </Link>
-          <span className="text-[10px] font-semibold text-muted-foreground">
+          <span className="text-[11px] font-semibold text-muted-foreground">
             {trainedThisMonth}日
           </span>
         </div>
 
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1.5">
           {WEEKDAYS.map((label) => (
             <span
               key={label}
-              className="text-center text-[8px] font-semibold text-muted-foreground"
+              className="text-center text-[10px] font-semibold text-muted-foreground"
             >
               {label}
             </span>
@@ -71,11 +71,11 @@ export function MonthlyCalendarCard({ logs }: { logs: WorkoutLog[] }) {
                 href={`/history/detail?date=${day.iso}`}
                 aria-label={`${day.iso}の記録詳細`}
                 className={cn(
-                  "flex aspect-square items-center justify-center rounded-md text-[9px] font-semibold tabular-nums transition-transform active:scale-95",
+                  "flex aspect-square items-center justify-center rounded-lg text-[13px] font-semibold tabular-nums transition-transform active:scale-90",
                   active
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary/60 text-muted-foreground",
-                  isToday && "ring-1 ring-primary",
+                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
+                    : "bg-secondary text-muted-foreground",
+                  isToday && "ring-2 ring-primary ring-offset-1 ring-offset-card",
                 )}
               >
                 {day.day}
