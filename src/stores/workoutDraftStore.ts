@@ -40,6 +40,15 @@ function updateEntry(
   };
 }
 
+/** セット入力のたびに最初/最後の入力時刻を記録する */
+function touchInput(draft: WorkoutDraft): Pick<WorkoutDraft, "firstInputAt" | "lastInputAt"> {
+  const now = new Date().toISOString();
+  return {
+    firstInputAt: draft.firstInputAt ?? now,
+    lastInputAt: now,
+  };
+}
+
 /**
  * 記録中セッションの下書き。persistにより
  * アプリを閉じても入力が消えない（継続体験の生命線）。
@@ -138,13 +147,16 @@ export const useWorkoutDraftStore = create<WorkoutDraftState>()(
         const { draft } = get();
         if (!draft) return;
         set({
-          draft: updateEntry(draft, exerciseId, (sets) => {
-            const last = sets[sets.length - 1];
-            const base = last
-              ? { ...last, isDone: false }
-              : { ...DEFAULT_SET };
-            return [...sets, { ...base, ...preset }];
-          }),
+          draft: {
+            ...updateEntry(draft, exerciseId, (sets) => {
+              const last = sets[sets.length - 1];
+              const base = last
+                ? { ...last, isDone: false }
+                : { ...DEFAULT_SET };
+              return [...sets, { ...base, ...preset }];
+            }),
+            ...touchInput(draft),
+          },
         });
       },
 
@@ -162,9 +174,12 @@ export const useWorkoutDraftStore = create<WorkoutDraftState>()(
         const { draft } = get();
         if (!draft) return;
         set({
-          draft: updateEntry(draft, exerciseId, (sets) =>
-            sets.map((s, i) => (i === setIndex ? { ...s, ...patch } : s)),
-          ),
+          draft: {
+            ...updateEntry(draft, exerciseId, (sets) =>
+              sets.map((s, i) => (i === setIndex ? { ...s, ...patch } : s)),
+            ),
+            ...touchInput(draft),
+          },
         });
       },
 
@@ -172,9 +187,12 @@ export const useWorkoutDraftStore = create<WorkoutDraftState>()(
         const { draft } = get();
         if (!draft) return;
         set({
-          draft: updateEntry(draft, exerciseId, (sets) =>
-            sets.map((s, i) => (i === setIndex ? { ...s, isDone: !s.isDone } : s)),
-          ),
+          draft: {
+            ...updateEntry(draft, exerciseId, (sets) =>
+              sets.map((s, i) => (i === setIndex ? { ...s, isDone: !s.isDone } : s)),
+            ),
+            ...touchInput(draft),
+          },
         });
       },
 

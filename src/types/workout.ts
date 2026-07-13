@@ -64,8 +64,12 @@ export interface WorkoutDraft {
   activeLogId?: string;
   /** YYYY-MM-DD */
   date: string;
-  /** ISO 8601 — 所要時間の起点 */
+  /** ISO 8601 — 記録画面を開いた時刻 */
   startedAt: string;
+  /** ISO 8601 — 最初にセットを入力した時刻 */
+  firstInputAt?: string;
+  /** ISO 8601 — 最後にセットを入力した時刻 */
+  lastInputAt?: string;
   entries: DraftEntry[];
   note: string;
 }

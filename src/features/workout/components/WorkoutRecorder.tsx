@@ -3,19 +3,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Clock, CloudOff, Loader2, MapPin, Plus } from "lucide-react";
-import type { CheckinDraft, DraftSet, WorkoutEntry, WorkoutLog } from "@/types";
+import type {
+  CheckinDraft,
+  DraftSet,
+  ExerciseRecord,
+  WorkoutEntry,
+  WorkoutLog,
+} from "@/types";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FadeIn } from "@/components/common/FadeIn";
 import { useHasMounted } from "@/hooks/useHasMounted";
 import { useExercises } from "@/hooks/useExercises";
 import { useWorkoutLogs } from "@/hooks/useWorkoutLogs";
+import { useRecords } from "@/hooks/useRecords";
 import { useUserName } from "@/hooks/useUserName";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { useWorkoutDraftStore } from "@/stores/workoutDraftStore";
 import { useMascotStore } from "@/stores/mascotStore";
 import { calcCategoryLastTrained } from "@/services/statsService";
-import { formatDateJa, formatElapsed, minutesSince } from "@/utils/date";
+import { formatDateJa, formatElapsed, formatTimeJa } from "@/utils/date";
 import { useCheckins } from "@/features/checkin/hooks/useCheckins";
 import { CheckinComposer } from "@/features/checkin/components/CheckinComposer";
 import type { AutoSaveStatus } from "../hooks/useAutoSaveWorkout";
@@ -99,6 +106,7 @@ export function WorkoutRecorder() {
     useWorkoutDraftStore();
   const { exercises, byId, reload: reloadExercises } = useExercises();
   const { logs } = useWorkoutLogs();
+  const { records } = useRecords();
   const { status: saveStatus, lastSavedAt, saveNow } = useAutoSaveWorkout(draft);
   const { name, saveName } = useUserName();
   const { addCheckin } = useCheckins();
@@ -106,8 +114,6 @@ export function WorkoutRecorder() {
   const speak = useMascotStore((s) => s.speak);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [checkinOpen, setCheckinOpen] = useState(false);
-  // 経過時間は描画のたびに算出し、インターバルで再描画だけを促す
-  const [, setTick] = useState(0);
 
   useEffect(() => {
     if (!mounted) return;
@@ -115,10 +121,11 @@ export function WorkoutRecorder() {
     else ensureActiveLogId();
   }, [mounted, startWorkout, ensureActiveLogId]);
 
-  useEffect(() => {
-    const timer = setInterval(() => setTick((t) => t + 1), 30_000);
-    return () => clearInterval(timer);
-  }, []);
+  const recordByExercise = useMemo(() => {
+    const map = new Map<string, ExerciseRecord>();
+    for (const record of records) map.set(record.exerciseId, record);
+    return map;
+  }, [records]);
 
   const recentIds = useMemo(() => {
     const ids: string[] = [];
@@ -142,8 +149,6 @@ export function WorkoutRecorder() {
   }, [logs, byId]);
 
   if (!mounted || !draft) return null;
-
-  const elapsed = minutesSince(draft.startedAt);
 
   const handleSelectExercise = (exerciseId: string) => {
     const prev = lastSessionFor(logs, exerciseId);
@@ -182,7 +187,16 @@ export function WorkoutRecorder() {
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="size-3.5" />
-          <span className="tabular-nums">経過 {elapsed}分</span>
+          {draft.firstInputAt ? (
+            <span className="tabular-nums">
+              最初 {formatTimeJa(draft.firstInputAt)}
+              {draft.lastInputAt && (
+                <> ・ 最後 {formatTimeJa(draft.lastInputAt)}</>
+              )}
+            </span>
+          ) : (
+            <span>まだ入力なし</span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <SaveStatusPill status={saveStatus} lastSavedAt={lastSavedAt} />
@@ -209,6 +223,7 @@ export function WorkoutRecorder() {
               entry={entry}
               exercise={byId.get(entry.exerciseId)}
               previous={lastSessionFor(logs, entry.exerciseId)}
+              record={recordByExercise.get(entry.exerciseId) ?? null}
             />
           </FadeIn>
         ))}

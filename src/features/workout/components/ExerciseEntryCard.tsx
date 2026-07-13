@@ -1,7 +1,7 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
-import type { DraftEntry, Exercise, WorkoutEntry } from "@/types";
+import { Plus, Trash2, Trophy } from "lucide-react";
+import type { DraftEntry, Exercise, ExerciseRecord, WorkoutEntry } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,12 +17,15 @@ interface ExerciseEntryCardProps {
   exercise: Exercise | undefined;
   /** 前回セッションの実績（日付 + 全セット）。Last Record として全セットを表示 */
   previous?: { date: string; entry: WorkoutEntry } | null;
+  /** この種目の自己ベスト（最高重量などの表示用）。未記録なら null */
+  record?: ExerciseRecord | null;
 }
 
 export function ExerciseEntryCard({
   entry,
   exercise,
   previous,
+  record,
 }: ExerciseEntryCardProps) {
   const { addSet, removeSet, updateSet, toggleSetDone, removeExercise } =
     useWorkoutDraftStore();
@@ -30,11 +33,19 @@ export function ExerciseEntryCard({
   const startRest = useRestTimerStore((s) => s.start);
 
   const handleToggleDone = (setIndex: number) => {
-    const wasDone = entry.sets[setIndex]?.isDone;
+    const set = entry.sets[setIndex];
+    const wasDone = set?.isDone;
     toggleSetDone(entry.exerciseId, setIndex);
     if (!wasDone) {
       startRest();
-      speak("setDone");
+      // 自己ベスト最高重量を超えたセット完了はまっすーが特別に応援する
+      const beatsMax =
+        !!record && set && set.weightKg > 0 && set.weightKg >= record.maxWeight;
+      if (beatsMax) {
+        speak("pb", { exercise: exercise?.nameJa });
+      } else {
+        speak("setDone");
+      }
     }
   };
 
@@ -50,11 +61,22 @@ export function ExerciseEntryCard({
           <CardTitle className="text-base font-bold">
             {exercise?.nameJa ?? entry.exerciseId}
           </CardTitle>
-          {exercise && (
-            <Badge variant="secondary" className="mt-1 text-[10px]">
-              {categoryNameJa(exercise.categoryId)}
-            </Badge>
-          )}
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            {exercise && (
+              <Badge variant="secondary" className="text-[10px]">
+                {categoryNameJa(exercise.categoryId)}
+              </Badge>
+            )}
+            {record && record.maxWeight > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary tabular-nums">
+                <Trophy className="size-3" />
+                最高 {record.maxWeight}kg
+                <span className="text-primary/70">
+                  ・1RM {Math.round(record.est1rm)}kg
+                </span>
+              </span>
+            )}
+          </div>
         </div>
         <button
           type="button"
