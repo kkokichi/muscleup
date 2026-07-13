@@ -31,23 +31,22 @@ export function VolumeSummaryCard({
             {formatVolume(summary.last7)}
           </p>
           <p className="mt-0.5 text-[9px] font-semibold text-muted-foreground tabular-nums">
-            {formatSignedVolume(summary.last7Delta)}
+            前7日比 {formatSignedVolume(summary.last7Delta)}
           </p>
-          <div className="mt-2.5 space-y-1">
+          <div className="mt-auto space-y-1 pt-2.5">
             {summary.weeks.slice(0, 3).map((w) => (
-              <div
-                key={w.label}
-                className="h-1.5 overflow-hidden rounded-full bg-secondary"
-              >
-                <div
-                  className="h-full rounded-full bg-primary"
-                  style={{ width: `${Math.min(100, (w.volume / maxWeek) * 100)}%` }}
-                />
+              <div key={w.label} className="flex items-center gap-1">
+                <span className="w-7 shrink-0 text-[8px] text-muted-foreground">
+                  {w.label}
+                </span>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${Math.min(100, (w.volume / maxWeek) * 100)}%` }}
+                  />
+                </div>
               </div>
             ))}
-          </div>
-          <div className="mt-auto pt-2 text-[9px] text-muted-foreground tabular-nums">
-            今週 {formatVolume(currentWeek)}
           </div>
         </CardContent>
       </Card>
