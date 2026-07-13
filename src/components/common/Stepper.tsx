@@ -53,7 +53,7 @@ export function Stepper({
           type="button"
           aria-label={`${label}を減らす`}
           onClick={() => nudge(-1)}
-          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground transition-transform active:scale-90"
+          className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground transition-transform active:scale-90"
         >
           <Minus className="size-4" />
         </button>
@@ -65,13 +65,13 @@ export function Stepper({
             onChange={(e) => setText(e.target.value)}
             onBlur={commit}
             onKeyDown={(e) => e.key === "Enter" && commit()}
-            className="w-14 rounded-md bg-secondary px-1 py-0.5 text-center text-base font-bold tabular-nums outline-none ring-2 ring-ring"
+            className="w-12 rounded-md bg-secondary px-1 py-0.5 text-center text-base font-bold tabular-nums outline-none ring-2 ring-ring"
           />
         ) : (
           <button
             type="button"
             onClick={beginEdit}
-            className="min-w-14 text-center text-base font-bold tabular-nums"
+            className="min-w-11 text-center text-base font-bold tabular-nums"
           >
             {value}
             {suffix && (
@@ -85,7 +85,7 @@ export function Stepper({
           type="button"
           aria-label={`${label}を増やす`}
           onClick={() => nudge(1)}
-          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground transition-transform active:scale-90"
+          className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground transition-transform active:scale-90"
         >
           <Plus className="size-4" />
         </button>

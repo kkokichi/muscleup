@@ -231,9 +231,9 @@ export function calcVolumeSummary(
   const previous7 = sumRange(13, 7);
   const last28 = sumRange(27, 0);
 
-  // 週別（月曜始まり）。今週から4週前まで
+  // 週別（月曜始まり）。今週から5週前まで
   const mondayOffset = (base.getDay() + 6) % 7;
-  const weeks = Array.from({ length: 5 }, (_, i) => {
+  const weeks = Array.from({ length: 6 }, (_, i) => {
     let volume = 0;
     for (let d = 0; d < 7; d++) {
       volume += byDate.get(daysAgoISO(mondayOffset + i * 7 - d, base)) ?? 0;

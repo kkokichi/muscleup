@@ -141,6 +141,18 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* マスコット祝福時の紙吹雪（framer-motionに依存しないCSSアニメーション） */
+@keyframes mascot-confetti-fall {
+  from {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(130px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

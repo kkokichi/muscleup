@@ -30,7 +30,13 @@ import { useAuthUser } from "@/hooks/useAuthUser";
 import { useWorkoutDraftStore } from "@/stores/workoutDraftStore";
 import { useMascotStore } from "@/stores/mascotStore";
 import { calcCategoryLastTrained } from "@/services/statsService";
-import { formatDateJa, formatElapsed, formatTimeJa, todayISO } from "@/utils/date";
+import {
+  formatDateJa,
+  formatElapsed,
+  formatTimeJa,
+  minutesBetween,
+  todayISO,
+} from "@/utils/date";
 import { useCheckins } from "@/features/checkin/hooks/useCheckins";
 import { CheckinComposer } from "@/features/checkin/components/CheckinComposer";
 import type { AutoSaveStatus } from "../hooks/useAutoSaveWorkout";
@@ -222,12 +228,10 @@ export function WorkoutRecorder() {
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="size-3.5" />
-          {draft.firstInputAt ? (
+          {draft.firstInputAt && draft.lastInputAt ? (
             <span className="tabular-nums">
-              最初 {formatTimeJa(draft.firstInputAt)}
-              {draft.lastInputAt && (
-                <> ・ 最後 {formatTimeJa(draft.lastInputAt)}</>
-              )}
+              {minutesBetween(draft.firstInputAt, draft.lastInputAt)}分（
+              {formatTimeJa(draft.firstInputAt)}〜{formatTimeJa(draft.lastInputAt)}）
             </span>
           ) : (
             <span>まだ入力なし</span>

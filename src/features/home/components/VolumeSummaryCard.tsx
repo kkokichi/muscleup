@@ -34,7 +34,7 @@ export function VolumeSummaryCard({
             前7日比 {formatSignedVolume(summary.last7Delta)}
           </p>
           <div className="mt-auto space-y-1 pt-2.5">
-            {summary.weeks.slice(0, 3).map((w) => (
+            {summary.weeks.slice(0, 6).map((w) => (
               <div key={w.label} className="flex items-center gap-1">
                 <span className="w-7 shrink-0 text-[8px] text-muted-foreground">
                   {w.label}
