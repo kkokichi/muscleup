@@ -10,7 +10,6 @@ import {
 } from "@/services/achievementService";
 import {
   readAchievementUnlockedAt,
-  readBadgeUnlockHistory,
   recordAchievementUnlocks,
 } from "@/services/gamificationStorageService";
 import { calcLongestStreak, calcLogVolume } from "@/services/statsService";
@@ -22,9 +21,6 @@ import { useMascotStore } from "@/stores/mascotStore";
  */
 export function useAchievements() {
   const [progress, setProgress] = useState<AchievementProgress[]>([]);
-  const [badgeHistory, setBadgeHistory] = useState(() =>
-    readBadgeUnlockHistory(8),
-  );
   const [isLoading, setIsLoading] = useState(true);
   const speak = useMascotStore((s) => s.speak);
 
@@ -70,8 +66,11 @@ export function useAchievements() {
 
       // 新規獲得を検出して日時を記録
       const now = new Date().toISOString();
-      const { unlockedAtMap, newlyUnlocked, badgeUnlocks } =
-        recordAchievementUnlocks(evaluated, unlockedAt, now);
+      const { unlockedAtMap, newlyUnlocked } = recordAchievementUnlocks(
+        evaluated,
+        unlockedAt,
+        now,
+      );
       if (newlyUnlocked.length > 0) {
         // 初回獲得の記録日時を反映
         for (const p of evaluated) {
@@ -82,7 +81,6 @@ export function useAchievements() {
       }
 
       setProgress(evaluated);
-      setBadgeHistory(badgeUnlocks.slice(0, 8));
       setIsLoading(false);
 
       // 新規獲得を祝福（最初の1件）
@@ -97,5 +95,5 @@ export function useAchievements() {
 
   const unlockedCount = progress.filter((p) => p.unlocked).length;
 
-  return { progress, badgeHistory, unlockedCount, total: progress.length, isLoading };
+  return { progress, unlockedCount, total: progress.length, isLoading };
 }

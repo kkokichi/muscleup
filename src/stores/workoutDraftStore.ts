@@ -22,6 +22,7 @@ interface WorkoutDraftState {
   ) => void;
   toggleSetDone: (exerciseId: string, setIndex: number) => void;
   setNote: (note: string) => void;
+  setDate: (date: string) => void;
   clear: () => void;
 }
 
@@ -200,6 +201,12 @@ export const useWorkoutDraftStore = create<WorkoutDraftState>()(
         const { draft } = get();
         if (!draft) return;
         set({ draft: { ...draft, note } });
+      },
+
+      setDate: (date) => {
+        const { draft } = get();
+        if (!draft) return;
+        set({ draft: { ...draft, date } });
       },
 
       clear: () => set({ draft: null }),

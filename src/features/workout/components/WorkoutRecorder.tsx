@@ -2,7 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Clock, CloudOff, Loader2, MapPin, Plus } from "lucide-react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  CloudOff,
+  Loader2,
+  MapPin,
+  Plus,
+} from "lucide-react";
 import type {
   CheckinDraft,
   DraftSet,
@@ -22,7 +30,7 @@ import { useAuthUser } from "@/hooks/useAuthUser";
 import { useWorkoutDraftStore } from "@/stores/workoutDraftStore";
 import { useMascotStore } from "@/stores/mascotStore";
 import { calcCategoryLastTrained } from "@/services/statsService";
-import { formatDateJa, formatElapsed, formatTimeJa } from "@/utils/date";
+import { formatDateJa, formatElapsed, formatTimeJa, todayISO } from "@/utils/date";
 import { useCheckins } from "@/features/checkin/hooks/useCheckins";
 import { CheckinComposer } from "@/features/checkin/components/CheckinComposer";
 import type { AutoSaveStatus } from "../hooks/useAutoSaveWorkout";
@@ -102,8 +110,15 @@ function SaveStatusPill({
 export function WorkoutRecorder() {
   const mounted = useHasMounted();
   const router = useRouter();
-  const { draft, startWorkout, ensureActiveLogId, addExercise, setNote, clear } =
-    useWorkoutDraftStore();
+  const {
+    draft,
+    startWorkout,
+    ensureActiveLogId,
+    addExercise,
+    setNote,
+    setDate,
+    clear,
+  } = useWorkoutDraftStore();
   const { exercises, byId, reload: reloadExercises } = useExercises();
   const { logs } = useWorkoutLogs();
   const { records } = useRecords();
@@ -183,6 +198,26 @@ export function WorkoutRecorder() {
           </Button>
         }
       />
+
+      <label className="mb-3 flex items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2.5">
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+          <CalendarDays className="size-4 text-primary" />
+          記録する日
+        </span>
+        <input
+          type="date"
+          value={draft.date}
+          max={todayISO()}
+          onChange={(e) => e.target.value && setDate(e.target.value)}
+          aria-label="ワークアウトの日付"
+          className="bg-transparent text-sm font-semibold tabular-nums outline-none"
+        />
+      </label>
+      {draft.date !== todayISO() && (
+        <p className="mb-3 -mt-1 text-[11px] font-medium text-primary">
+          過去の記録として保存されます（{formatDateJa(draft.date)}）
+        </p>
+      )}
 
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
