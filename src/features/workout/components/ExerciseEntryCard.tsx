@@ -1,13 +1,7 @@
 "use client";
 
 import { Plus, Trash2, Trophy } from "lucide-react";
-import type {
-  DraftEntry,
-  DraftSet,
-  Exercise,
-  ExerciseRecord,
-  WorkoutEntry,
-} from "@/types";
+import type { DraftEntry, Exercise, ExerciseRecord, WorkoutEntry } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,17 +33,17 @@ export function ExerciseEntryCard({
   const speakText = useMascotStore((s) => s.speakText);
   const startRest = useRestTimerStore((s) => s.start);
 
-  // 回数を入力した瞬間に、過去の実績をもとにまっすーが提案する
-  const handleUpdateSet = (setIndex: number, patch: Partial<DraftSet>) => {
-    const before = entry.sets[setIndex];
-    updateSet(entry.exerciseId, setIndex, patch);
-    if (patch.reps === undefined || patch.reps <= 0 || patch.reps === before?.reps) {
-      return;
-    }
-    const merged = { ...before, ...patch };
+  // チェック（セット完了）時に、過去実績をもとにパーソナルトレーナー風の一言を出す
+  const handleToggleDone = (setIndex: number) => {
+    const set = entry.sets[setIndex];
+    const wasDone = set?.isDone;
+    toggleSetDone(entry.exerciseId, setIndex);
+    if (wasDone || !set) return;
+    startRest();
     const advice = pickSetAdvice({
-      weightKg: merged.weightKg,
-      reps: merged.reps,
+      weightKg: set.weightKg,
+      reps: set.reps,
+      rpe: set.rpe,
       record: record ?? null,
       previous: previous?.entry ?? null,
       setIndex,
@@ -57,13 +51,6 @@ export function ExerciseEntryCard({
       exerciseName: exercise?.nameJa,
     });
     if (advice.text) speakText(advice.text, advice.celebrate);
-  };
-
-  // チェックマークは完了マークとレスト開始のみ。コメントは回数入力側で出す
-  const handleToggleDone = (setIndex: number) => {
-    const wasDone = entry.sets[setIndex]?.isDone;
-    toggleSetDone(entry.exerciseId, setIndex);
-    if (!wasDone) startRest();
   };
 
   const handleRemoveSet = (setIndex: number) => {
@@ -130,7 +117,7 @@ export function ExerciseEntryCard({
               key={i}
               index={i}
               set={set}
-              onUpdate={(patch) => handleUpdateSet(i, patch)}
+              onUpdate={(patch) => updateSet(entry.exerciseId, i, patch)}
               onToggleDone={() => handleToggleDone(i)}
               onRemove={() => handleRemoveSet(i)}
             />
