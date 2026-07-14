@@ -11,6 +11,8 @@ interface MascotState {
   /** PB更新など特別な祝福か（紙吹雪演出用） */
   isCelebration: boolean;
   speak: (context: MascotContext, vars?: MascotMessageVars) => void;
+  /** 定型プールを介さず、その場で組み立てた文言を直接話す（実績ベースの提案など） */
+  speakText: (text: string, celebration?: boolean) => void;
   dismiss: () => void;
 }
 
@@ -23,6 +25,17 @@ export const useMascotStore = create<MascotState>((set) => ({
     set({
       currentMessage: pickMascotMessage(context, vars),
       isCelebration: context === "pb",
+    }),
+
+  speakText: (text, celebration = false) =>
+    set({
+      currentMessage: {
+        id: "advice",
+        context: celebration ? "pb" : "encourage",
+        text,
+        weight: 1,
+      },
+      isCelebration: celebration,
     }),
 
   dismiss: () => set({ currentMessage: null, isCelebration: false }),

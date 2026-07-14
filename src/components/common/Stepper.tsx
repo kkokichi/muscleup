@@ -46,9 +46,9 @@ export function Stepper({
   };
 
   return (
-    <div className="flex flex-1 flex-col items-center gap-1">
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
       <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
-      <div className="flex w-full items-center justify-center gap-1">
+      <div className="flex w-full items-center justify-center gap-0.5">
         <button
           type="button"
           aria-label={`${label}を減らす`}
@@ -65,13 +65,13 @@ export function Stepper({
             onChange={(e) => setText(e.target.value)}
             onBlur={commit}
             onKeyDown={(e) => e.key === "Enter" && commit()}
-            className="w-12 rounded-md bg-secondary px-1 py-0.5 text-center text-base font-bold tabular-nums outline-none ring-2 ring-ring"
+            className="w-10 min-w-0 rounded-md bg-secondary px-1 py-0.5 text-center text-base font-bold tabular-nums outline-none ring-2 ring-ring"
           />
         ) : (
           <button
             type="button"
             onClick={beginEdit}
-            className="min-w-11 text-center text-base font-bold tabular-nums"
+            className="min-w-9 text-center text-base font-bold tabular-nums"
           >
             {value}
             {suffix && (

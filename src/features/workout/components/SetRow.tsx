@@ -20,26 +20,24 @@ export function SetRow({ index, set, onUpdate, onToggleDone, onRemove }: SetRowP
   return (
     <div
       className={cn(
-        "flex items-center gap-1.5 rounded-xl px-1.5 py-2 transition-colors",
+        "flex items-center gap-1 rounded-xl px-1 py-2 transition-colors",
         set.isDone && "bg-primary/5",
       )}
     >
-      <span className="w-4 shrink-0 text-center text-xs font-bold text-muted-foreground tabular-nums">
+      <span className="w-3.5 shrink-0 text-center text-xs font-bold text-muted-foreground tabular-nums">
         {index + 1}
       </span>
 
       <Stepper
-        label="重量"
+        label="重量kg"
         value={set.weightKg}
         step={2.5}
-        suffix="kg"
         onChange={(weightKg) => onUpdate({ weightKg })}
       />
       <Stepper
         label="回数"
         value={set.reps}
         step={1}
-        suffix="回"
         onChange={(reps) => onUpdate({ reps: Math.round(reps) })}
       />
 
@@ -53,7 +51,7 @@ export function SetRow({ index, set, onUpdate, onToggleDone, onRemove }: SetRowP
               rpe: e.target.value === "" ? undefined : Number(e.target.value),
             })
           }
-          className="h-8 w-11 rounded-md bg-secondary text-center text-sm font-semibold tabular-nums outline-none"
+          className="h-8 w-10 rounded-md bg-secondary text-center text-sm font-semibold tabular-nums outline-none"
         >
           {RPE_OPTIONS.map((v) => (
             <option key={v} value={v}>
@@ -71,22 +69,22 @@ export function SetRow({ index, set, onUpdate, onToggleDone, onRemove }: SetRowP
         animate={set.isDone ? { scale: [1, 1.25, 1] } : { scale: 1 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
         className={cn(
-          "flex size-8 shrink-0 items-center justify-center rounded-full border transition-colors",
+          "flex size-7 shrink-0 items-center justify-center rounded-full border transition-colors",
           set.isDone
             ? "border-primary bg-primary text-primary-foreground"
             : "border-border text-muted-foreground",
         )}
       >
-        <Check className="size-4" strokeWidth={3} />
+        <Check className="size-3.5" strokeWidth={3} />
       </motion.button>
 
       <button
         type="button"
         aria-label="セットを削除"
         onClick={onRemove}
-        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
       >
-        <X className="size-4" />
+        <X className="size-3.5" />
       </button>
     </div>
   );
