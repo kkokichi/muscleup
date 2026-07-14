@@ -15,6 +15,7 @@ import { todayISO } from "@/utils/date";
 import { MascotGreetingCard } from "./MascotGreetingCard";
 import { StatsGrid } from "./StatsGrid";
 import { TodayPlanCard } from "./TodayPlanCard";
+import { MuscleLastTrainedCard } from "./MuscleLastTrainedCard";
 import { RecentWorkoutsList } from "./RecentWorkoutsList";
 import { ReminderNudge } from "./ReminderNudge";
 import { HomeQuickLinks } from "./HomeQuickLinks";
@@ -80,6 +81,9 @@ export function HomeDashboard() {
             suggestedCategoryId={suggestedCategoryId}
             trainedToday={stats.trainedToday}
           />
+        </FadeIn>
+        <FadeIn delay={0.08}>
+          <MuscleLastTrainedCard logs={stats.logs} exerciseById={byId} />
         </FadeIn>
         <FadeIn delay={0.1}>
           <div className="grid grid-cols-3 gap-3">

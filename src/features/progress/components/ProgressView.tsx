@@ -12,6 +12,7 @@ import {
   buildProgressSeries,
   calcMonthlyGrowth,
 } from "@/services/statsService";
+import { EXERCISE_CATEGORIES } from "@/data/categories";
 import { Mascot } from "@/features/mascot/components/Mascot";
 import { cn } from "@/lib/utils";
 import { WeightChart } from "./WeightChart";
@@ -26,6 +27,7 @@ export function ProgressView() {
   const { records } = useRecords();
   const { byId } = useExercises();
   const [mode, setMode] = useState<ProgressMode>("exercise");
+  const [userSelectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [userSelectedId, setSelectedId] = useState<string | null>(null);
 
   /** 記録のある種目のみ（最近やった順） */
@@ -39,8 +41,30 @@ export function ProgressView() {
     return ids;
   }, [logs]);
 
-  // 未選択時は最新の種目を自動選択（状態ではなく導出値として扱う）
-  const selectedId = userSelectedId ?? trainedIds[0] ?? null;
+  /** 記録のある部位のみ（カテゴリ定義順） */
+  const trainedCategories = useMemo(() => {
+    const present = new Set<string>();
+    for (const id of trainedIds) {
+      const cat = byId.get(id)?.categoryId;
+      if (cat) present.add(cat);
+    }
+    return EXERCISE_CATEGORIES.filter((c) => present.has(c.id)).map((c) => c.id);
+  }, [trainedIds, byId]);
+
+  // 未選択時は最初の部位を自動選択（導出値）
+  const selectedCategory = userSelectedCategory ?? trainedCategories[0] ?? null;
+
+  /** 選択中の部位に属する、記録のある種目 */
+  const exercisesInCategory = useMemo(
+    () => trainedIds.filter((id) => byId.get(id)?.categoryId === selectedCategory),
+    [trainedIds, byId, selectedCategory],
+  );
+
+  // 選択中の種目が部位内に無ければ、その部位の先頭を選ぶ（導出値）
+  const selectedId =
+    userSelectedId && exercisesInCategory.includes(userSelectedId)
+      ? userSelectedId
+      : (exercisesInCategory[0] ?? null);
 
   const series = useMemo(
     () => (selectedId ? buildProgressSeries(logs, selectedId) : []),
@@ -106,8 +130,33 @@ export function ProgressView() {
         <MuscleBalanceView logs={logs} />
       ) : (
         <>
+          {/* 部位で絞り込み → その部位の種目を選ぶ */}
+          <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1">
+            {trainedCategories.map((catId) => {
+              const category = EXERCISE_CATEGORIES.find((c) => c.id === catId);
+              return (
+                <button
+                  key={catId}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory(catId);
+                    setSelectedId(null);
+                  }}
+                  className={cn(
+                    "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors",
+                    catId === selectedCategory
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground",
+                  )}
+                >
+                  {category?.nameJa ?? catId}
+                </button>
+              );
+            })}
+          </div>
+
           <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1">
-            {trainedIds.map((id) => (
+            {exercisesInCategory.map((id) => (
               <button
                 key={id}
                 type="button"
