@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock } from "lucide-react";
+import { Clock, Trophy } from "lucide-react";
 import type { WorkoutLog } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,10 @@ import { calcLogVolume } from "@/services/statsService";
 import { estimate1RM } from "@/services/oneRepMaxService";
 import { categoryNameJa } from "@/data/categories";
 
-/** 1ワークアウトの全セットを読み取り専用で表示（種目ごとのテーブル + メモ） */
+/**
+ * 1ワークアウトの全セットを読み取り専用で表示する。
+ * 入力画面（ExerciseEntryCard）と揃えたカード + セット行レイアウトで見せる。
+ */
 export function WorkoutSetsDetail({ log }: { log: WorkoutLog }) {
   const { byId } = useExercises();
 
@@ -27,13 +30,17 @@ export function WorkoutSetsDetail({ log }: { log: WorkoutLog }) {
         </span>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {log.entries.map((entry) => {
           const exercise = byId.get(entry.exerciseId);
+          const best1rm = entry.sets.reduce(
+            (max, set) => Math.max(max, estimate1RM(set.weightKg, set.reps)),
+            0,
+          );
           return (
             <Card key={entry.exerciseId} className="border-border bg-card">
               <CardHeader className="pb-2">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <CardTitle className="text-base font-bold">
                     {exercise?.nameJa ?? entry.exerciseId}
                   </CardTitle>
@@ -42,33 +49,44 @@ export function WorkoutSetsDetail({ log }: { log: WorkoutLog }) {
                       {categoryNameJa(exercise.categoryId)}
                     </Badge>
                   )}
+                  {best1rm > 0 && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary tabular-nums">
+                      <Trophy className="size-3" />
+                      推定1RM {Math.round(best1rm)}kg
+                    </span>
+                  )}
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-[11px] text-muted-foreground">
-                      <th className="py-1 font-medium">セット</th>
-                      <th className="py-1 font-medium">重量</th>
-                      <th className="py-1 font-medium">回数</th>
-                      <th className="py-1 font-medium">RPE</th>
-                      <th className="py-1 text-right font-medium">推定1RM</th>
-                    </tr>
-                  </thead>
-                  <tbody className="tabular-nums">
-                    {entry.sets.map((set) => (
-                      <tr key={set.setNumber} className="border-t border-border/50">
-                        <td className="py-1.5">{set.setNumber}</td>
-                        <td className="py-1.5 font-semibold">{set.weightKg}kg</td>
-                        <td className="py-1.5">{set.reps}回</td>
-                        <td className="py-1.5">{set.rpe ?? "-"}</td>
-                        <td className="py-1.5 text-right text-muted-foreground">
-                          {estimate1RM(set.weightKg, set.reps)}kg
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <CardContent className="space-y-1 pt-0">
+                <div className="flex items-center gap-2 px-1 text-[10px] font-medium text-muted-foreground">
+                  <span className="w-4 shrink-0 text-center">#</span>
+                  <span className="flex-1 text-center">重量kg</span>
+                  <span className="flex-1 text-center">回数</span>
+                  <span className="w-10 shrink-0 text-center">RPE</span>
+                  <span className="w-14 shrink-0 text-right">推定1RM</span>
+                </div>
+                {entry.sets.map((set) => (
+                  <div
+                    key={set.setNumber}
+                    className="flex items-center gap-2 rounded-xl bg-secondary/50 px-1 py-2 text-sm tabular-nums"
+                  >
+                    <span className="w-4 shrink-0 text-center text-xs font-bold text-muted-foreground">
+                      {set.setNumber}
+                    </span>
+                    <span className="flex-1 text-center text-base font-bold">
+                      {set.weightKg}
+                    </span>
+                    <span className="flex-1 text-center text-base font-bold">
+                      {set.reps}
+                    </span>
+                    <span className="w-10 shrink-0 text-center text-muted-foreground">
+                      {set.rpe ?? "-"}
+                    </span>
+                    <span className="w-14 shrink-0 text-right text-muted-foreground">
+                      {estimate1RM(set.weightKg, set.reps)}kg
+                    </span>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           );

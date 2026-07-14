@@ -1,14 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Clock, Plus } from "lucide-react";
-import type {
-  DraftSet,
-  ExerciseRecord,
-  WorkoutEntry,
-  WorkoutLog,
-} from "@/types";
+import type { ExerciseRecord, WorkoutEntry, WorkoutLog } from "@/types";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FadeIn } from "@/components/common/FadeIn";
@@ -23,7 +18,6 @@ import { useAutoSaveWorkout } from "../hooks/useAutoSaveWorkout";
 import { ExerciseEntryCard } from "./ExerciseEntryCard";
 import { ExercisePickerSheet } from "./ExercisePickerSheet";
 import { RestTimerBar } from "./RestTimerBar";
-import { WorkoutTemplatePanel } from "./WorkoutTemplatePanel";
 
 /** 直近ログから種目の前回セッション（日付+全セット）を引く */
 function lastSessionFor(
@@ -44,22 +38,37 @@ export function WorkoutRecorder() {
     draft,
     startWorkout,
     ensureActiveLogId,
+    resumeFromLog,
     addExercise,
     setNote,
     setDate,
     clear,
   } = useWorkoutDraftStore();
   const { exercises, byId, reload: reloadExercises } = useExercises();
-  const { logs } = useWorkoutLogs();
+  const { logs, isLoading: logsLoading } = useWorkoutLogs();
   const { records } = useRecords();
   const { status: saveStatus, saveNow } = useAutoSaveWorkout(draft);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const hydratedRef = useRef(false);
 
   useEffect(() => {
     if (!mounted) return;
     if (!useWorkoutDraftStore.getState().draft) startWorkout();
     else ensureActiveLogId();
   }, [mounted, startWorkout, ensureActiveLogId]);
+
+  // 終了後に再度開いたとき、その日の保存済みワークアウトを読み込んで続きを編集できるようにする。
+  // 入力中の下書き（種目が既にある状態）は上書きしない。
+  useEffect(() => {
+    if (!mounted || logsLoading || hydratedRef.current) return;
+    const current = useWorkoutDraftStore.getState().draft;
+    if (!current || current.entries.length > 0) return;
+    const savedToday = logs.find((log) => log.date === current.date);
+    if (savedToday) {
+      hydratedRef.current = true;
+      resumeFromLog(savedToday);
+    }
+  }, [mounted, logsLoading, logs, resumeFromLog]);
 
   const recordByExercise = useMemo(() => {
     const map = new Map<string, ExerciseRecord>();
@@ -91,13 +100,8 @@ export function WorkoutRecorder() {
   if (!mounted || !draft) return null;
 
   const handleSelectExercise = (exerciseId: string) => {
-    const prev = lastSessionFor(logs, exerciseId);
-    const presetSets: DraftSet[] | undefined = prev?.entry.sets.map((s) => ({
-      weightKg: s.weightKg,
-      reps: s.reps,
-      isDone: false,
-    }));
-    addExercise(exerciseId, presetSets);
+    // 新規追加時は前回の値を引き継がず、空のセット1つから始める
+    addExercise(exerciseId);
     setPickerOpen(false);
   };
 
@@ -144,7 +148,8 @@ export function WorkoutRecorder() {
         </p>
       )}
 
-      <div className="mb-4 flex items-center justify-between gap-2">
+      {/* レストタイマーはスクロールしても常に見えるよう上部に固定する */}
+      <div className="sticky top-0 z-30 -mx-4 mb-4 flex items-center justify-between gap-2 border-b border-border/60 bg-background/85 px-4 py-2 backdrop-blur">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="size-3.5" />
           {draft.firstInputAt ? (
@@ -155,8 +160,6 @@ export function WorkoutRecorder() {
         </div>
         <RestTimerBar />
       </div>
-
-      <WorkoutTemplatePanel draft={draft} latestLog={logs[0]} />
 
       <div className="space-y-4">
         {draft.entries.map((entry, i) => (
