@@ -1,23 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  CalendarDays,
-  CheckCircle2,
-  Clock,
-  CloudOff,
-  Loader2,
-  MapPin,
-  Plus,
-} from "lucide-react";
-import type {
-  CheckinDraft,
-  DraftSet,
-  ExerciseRecord,
-  WorkoutEntry,
-  WorkoutLog,
-} from "@/types";
+import { CalendarDays, Clock, Plus } from "lucide-react";
+import type { ExerciseRecord, WorkoutEntry, WorkoutLog } from "@/types";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FadeIn } from "@/components/common/FadeIn";
@@ -25,26 +11,13 @@ import { useHasMounted } from "@/hooks/useHasMounted";
 import { useExercises } from "@/hooks/useExercises";
 import { useWorkoutLogs } from "@/hooks/useWorkoutLogs";
 import { useRecords } from "@/hooks/useRecords";
-import { useUserName } from "@/hooks/useUserName";
-import { useAuthUser } from "@/hooks/useAuthUser";
 import { useWorkoutDraftStore } from "@/stores/workoutDraftStore";
-import { useMascotStore } from "@/stores/mascotStore";
 import { calcCategoryLastTrained } from "@/services/statsService";
-import {
-  formatDateJa,
-  formatElapsed,
-  formatTimeJa,
-  minutesBetween,
-  todayISO,
-} from "@/utils/date";
-import { useCheckins } from "@/features/checkin/hooks/useCheckins";
-import { CheckinComposer } from "@/features/checkin/components/CheckinComposer";
-import type { AutoSaveStatus } from "../hooks/useAutoSaveWorkout";
+import { formatDateJa, formatElapsed, formatTimeJa, todayISO } from "@/utils/date";
 import { useAutoSaveWorkout } from "../hooks/useAutoSaveWorkout";
 import { ExerciseEntryCard } from "./ExerciseEntryCard";
 import { ExercisePickerSheet } from "./ExercisePickerSheet";
 import { RestTimerBar } from "./RestTimerBar";
-import { WorkoutTemplatePanel } from "./WorkoutTemplatePanel";
 
 /** 直近ログから種目の前回セッション（日付+全セット）を引く */
 function lastSessionFor(
@@ -58,61 +31,6 @@ function lastSessionFor(
   return null;
 }
 
-function SaveStatusPill({
-  status,
-  lastSavedAt,
-}: {
-  status: AutoSaveStatus;
-  lastSavedAt: Date | null;
-}) {
-  if (status === "saving") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">
-        <Loader2 className="size-3.5 animate-spin" />
-        保存中…
-      </span>
-    );
-  }
-
-  if (status === "error") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive">
-        保存に失敗
-      </span>
-    );
-  }
-
-  if (status === "offline") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">
-        <CloudOff className="size-3.5" />
-        オフライン保存済み
-      </span>
-    );
-  }
-
-  if (status === "saved") {
-    const savedAt = lastSavedAt
-      ? ` ${lastSavedAt.toLocaleTimeString("ja-JP", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`
-      : "";
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
-        <CheckCircle2 className="size-3.5" />
-        保存済み{savedAt}
-      </span>
-    );
-  }
-
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">
-      入力待ち
-    </span>
-  );
-}
-
 export function WorkoutRecorder() {
   const mounted = useHasMounted();
   const router = useRouter();
@@ -120,27 +38,37 @@ export function WorkoutRecorder() {
     draft,
     startWorkout,
     ensureActiveLogId,
+    resumeFromLog,
     addExercise,
     setNote,
     setDate,
     clear,
   } = useWorkoutDraftStore();
   const { exercises, byId, reload: reloadExercises } = useExercises();
-  const { logs } = useWorkoutLogs();
+  const { logs, isLoading: logsLoading } = useWorkoutLogs();
   const { records } = useRecords();
-  const { status: saveStatus, lastSavedAt, saveNow } = useAutoSaveWorkout(draft);
-  const { name, saveName } = useUserName();
-  const { addCheckin } = useCheckins();
-  const { user } = useAuthUser();
-  const speak = useMascotStore((s) => s.speak);
+  const { status: saveStatus, saveNow } = useAutoSaveWorkout(draft);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [checkinOpen, setCheckinOpen] = useState(false);
+  const hydratedRef = useRef(false);
 
   useEffect(() => {
     if (!mounted) return;
     if (!useWorkoutDraftStore.getState().draft) startWorkout();
     else ensureActiveLogId();
   }, [mounted, startWorkout, ensureActiveLogId]);
+
+  // 終了後に再度開いたとき、その日の保存済みワークアウトを読み込んで続きを編集できるようにする。
+  // 入力中の下書き（種目が既にある状態）は上書きしない。
+  useEffect(() => {
+    if (!mounted || logsLoading || hydratedRef.current) return;
+    const current = useWorkoutDraftStore.getState().draft;
+    if (!current || current.entries.length > 0) return;
+    const savedToday = logs.find((log) => log.date === current.date);
+    if (savedToday) {
+      hydratedRef.current = true;
+      resumeFromLog(savedToday);
+    }
+  }, [mounted, logsLoading, logs, resumeFromLog]);
 
   const recordByExercise = useMemo(() => {
     const map = new Map<string, ExerciseRecord>();
@@ -172,13 +100,8 @@ export function WorkoutRecorder() {
   if (!mounted || !draft) return null;
 
   const handleSelectExercise = (exerciseId: string) => {
-    const prev = lastSessionFor(logs, exerciseId);
-    const presetSets: DraftSet[] | undefined = prev?.entry.sets.map((s) => ({
-      weightKg: s.weightKg,
-      reps: s.reps,
-      isDone: false,
-    }));
-    addExercise(exerciseId, presetSets);
+    // 新規追加時は前回の値を引き継がず、空のセット1つから始める
+    addExercise(exerciseId);
     setPickerOpen(false);
   };
 
@@ -225,35 +148,18 @@ export function WorkoutRecorder() {
         </p>
       )}
 
-      <div className="mb-4 flex items-center justify-between gap-2">
+      {/* レストタイマーはスクロールしても常に見えるよう上部に固定する */}
+      <div className="sticky top-0 z-30 -mx-4 mb-4 flex items-center justify-between gap-2 border-b border-border/60 bg-background/85 px-4 py-2 backdrop-blur">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="size-3.5" />
-          {draft.firstInputAt && draft.lastInputAt ? (
-            <span className="tabular-nums">
-              {minutesBetween(draft.firstInputAt, draft.lastInputAt)}分（
-              {formatTimeJa(draft.firstInputAt)}〜{formatTimeJa(draft.lastInputAt)}）
-            </span>
+          {draft.firstInputAt ? (
+            <span className="tabular-nums">{formatTimeJa(draft.firstInputAt)}〜</span>
           ) : (
             <span>まだ入力なし</span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <SaveStatusPill status={saveStatus} lastSavedAt={lastSavedAt} />
-          {user && (
-            <button
-              type="button"
-              onClick={() => setCheckinOpen(true)}
-              className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground transition-colors active:bg-secondary/70"
-            >
-              <MapPin className="size-3.5 text-primary" />
-              チェックイン
-            </button>
-          )}
-        </div>
+        <RestTimerBar />
       </div>
-
-      <RestTimerBar />
-      <WorkoutTemplatePanel draft={draft} latestLog={logs[0]} />
 
       <div className="space-y-4">
         {draft.entries.map((entry, i) => (
@@ -312,16 +218,6 @@ export function WorkoutRecorder() {
         onClose={() => setPickerOpen(false)}
       />
 
-      <CheckinComposer
-        open={checkinOpen}
-        initialName={name}
-        onClose={() => setCheckinOpen(false)}
-        onSubmit={async (checkinDraft: CheckinDraft, authorName: string) => {
-          await saveName(authorName);
-          await addCheckin(checkinDraft, authorName);
-          speak("greeting");
-        }}
-      />
     </div>
   );
 }

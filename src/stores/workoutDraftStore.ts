@@ -11,6 +11,8 @@ interface WorkoutDraftState {
   ensureActiveLogId: () => void;
   startFromTemplate: (template: WorkoutTemplate) => void;
   startFromLog: (log: WorkoutLog) => void;
+  /** 保存済みログを同一IDのまま下書きへ復元し、続きを編集できるようにする */
+  resumeFromLog: (log: WorkoutLog) => void;
   addExercise: (exerciseId: string, presetSets?: DraftSet[]) => void;
   removeExercise: (exerciseId: string) => void;
   addSet: (exerciseId: string, preset?: Partial<DraftSet>) => void;
@@ -119,6 +121,31 @@ export const useWorkoutDraftStore = create<WorkoutDraftState>()(
         });
       },
 
+      resumeFromLog: (log) => {
+        const lastInputAt = new Date(
+          new Date(log.createdAt).getTime() + log.durationMinutes * 60_000,
+        ).toISOString();
+        set({
+          draft: {
+            activeLogId: log.id,
+            date: log.date,
+            startedAt: new Date().toISOString(),
+            firstInputAt: log.createdAt,
+            lastInputAt,
+            entries: log.entries.map((entry) => ({
+              exerciseId: entry.exerciseId,
+              sets: entry.sets.map((workoutSet) => ({
+                weightKg: workoutSet.weightKg,
+                reps: workoutSet.reps,
+                ...(workoutSet.rpe !== undefined ? { rpe: workoutSet.rpe } : {}),
+                isDone: true,
+              })),
+            })),
+            note: log.note,
+          },
+        });
+      },
+
       addExercise: (exerciseId, presetSets) => {
         const { draft } = get();
         if (!draft || draft.entries.some((e) => e.exerciseId === exerciseId)) return;
@@ -149,13 +176,11 @@ export const useWorkoutDraftStore = create<WorkoutDraftState>()(
         if (!draft) return;
         set({
           draft: {
-            ...updateEntry(draft, exerciseId, (sets) => {
-              const last = sets[sets.length - 1];
-              const base = last
-                ? { ...last, isDone: false }
-                : { ...DEFAULT_SET };
-              return [...sets, { ...base, ...preset }];
-            }),
+            ...updateEntry(draft, exerciseId, (sets) => [
+              ...sets,
+              // 新規セットは前のセット値を引き継がず、常に初期値から始める
+              { ...DEFAULT_SET, ...preset },
+            ]),
             ...touchInput(draft),
           },
         });

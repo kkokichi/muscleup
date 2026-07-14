@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Pause, Plus, Timer, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Plus, Timer, X } from "lucide-react";
 import { useRestTimerStore } from "@/stores/restTimerStore";
 import { cn } from "@/lib/utils";
+
+const PRESETS = [60, 90, 120] as const;
 
 function formatRemaining(seconds: number): string {
   const safe = Math.max(0, seconds);
@@ -13,8 +14,17 @@ function formatRemaining(seconds: number): string {
   return `${minutes}:${String(rest).padStart(2, "0")}`;
 }
 
+function presetLabel(seconds: number): string {
+  if (seconds === 90) return "90秒";
+  return `${seconds / 60}分`;
+}
+
+/**
+ * レストタイマーのコンパクト表示。ワークアウト画面上部（旧・保存ステータスの位置）に置き、
+ * 待機中はプリセットのチップ、計測中はカウントダウンと操作を出す。
+ */
 export function RestTimerBar() {
-  const { endsAt, durationSeconds, start, stop, addSeconds } = useRestTimerStore();
+  const { endsAt, start, stop, addSeconds } = useRestTimerStore();
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
@@ -32,59 +42,51 @@ export function RestTimerBar() {
   const active = Boolean(endsAt);
   const done = active && remaining <= 0;
 
+  if (!active) {
+    return (
+      <div className="flex items-center gap-1">
+        <Timer className="size-3.5 shrink-0 text-muted-foreground" />
+        {PRESETS.map((seconds) => (
+          <button
+            key={seconds}
+            type="button"
+            onClick={() => start(seconds)}
+            className="rounded-full bg-secondary px-2 py-1 text-[11px] font-semibold text-foreground transition-colors active:bg-secondary/70"
+          >
+            {presetLabel(seconds)}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
-        "mb-4 rounded-2xl border p-3 transition-colors",
-        active ? "border-primary/40 bg-primary/10" : "border-border bg-card",
+        "flex items-center gap-1 rounded-full px-1.5 py-1",
+        done ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary",
       )}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="flex size-9 items-center justify-center rounded-full bg-secondary">
-            <Timer className="size-4 text-primary" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-muted-foreground">レスト</p>
-            <p className="text-xl font-black tabular-nums">
-              {active ? (done ? "次セットへ" : formatRemaining(remaining)) : "待機中"}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1">
-          {[60, 90, 120].map((seconds) => (
-            <Button
-              key={seconds}
-              variant={durationSeconds === seconds && active ? "default" : "secondary"}
-              size="sm"
-              onClick={() => start(seconds)}
-            >
-              {seconds / 60 === 1.5 ? "90秒" : `${seconds / 60}分`}
-            </Button>
-          ))}
-          {active && (
-            <>
-              <Button
-                variant="secondary"
-                size="icon"
-                aria-label="レストを30秒延長"
-                onClick={() => addSeconds(30)}
-              >
-                <Plus className="size-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="レストを停止"
-                onClick={stop}
-              >
-                {done ? <X className="size-4" /> : <Pause className="size-4" />}
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
+      <Timer className="size-3.5 shrink-0" />
+      <span className="min-w-11 text-center text-sm font-black tabular-nums">
+        {done ? "次へ" : formatRemaining(remaining)}
+      </span>
+      <button
+        type="button"
+        aria-label="レストを30秒延長"
+        onClick={() => addSeconds(30)}
+        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background/20 transition-transform active:scale-90"
+      >
+        <Plus className="size-3.5" />
+      </button>
+      <button
+        type="button"
+        aria-label="レストを停止"
+        onClick={stop}
+        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background/20 transition-transform active:scale-90"
+      >
+        <X className="size-3.5" />
+      </button>
     </div>
   );
 }

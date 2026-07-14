@@ -73,7 +73,7 @@ export function HistoryList() {
             return (
               <Link
                 key={log.id}
-                href={`/history/detail?id=${log.id}`}
+                href={`/history/detail?date=${log.date}`}
                 className="block"
               >
                 <Card className="border-border bg-card transition-colors active:bg-secondary/50">

@@ -1,7 +1,13 @@
 "use client";
 
 import { Plus, Trash2, Trophy } from "lucide-react";
-import type { DraftEntry, Exercise, ExerciseRecord, WorkoutEntry } from "@/types";
+import type {
+  DraftEntry,
+  DraftSet,
+  Exercise,
+  ExerciseRecord,
+  WorkoutEntry,
+} from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +16,7 @@ import { formatDateShort } from "@/utils/date";
 import { useWorkoutDraftStore } from "@/stores/workoutDraftStore";
 import { useMascotStore } from "@/stores/mascotStore";
 import { useRestTimerStore } from "@/stores/restTimerStore";
+import { pickSetAdvice } from "@/services/workoutAdviceService";
 import { SetRow } from "./SetRow";
 
 interface ExerciseEntryCardProps {
@@ -29,24 +36,34 @@ export function ExerciseEntryCard({
 }: ExerciseEntryCardProps) {
   const { addSet, removeSet, updateSet, toggleSetDone, removeExercise } =
     useWorkoutDraftStore();
-  const speak = useMascotStore((s) => s.speak);
+  const speakText = useMascotStore((s) => s.speakText);
   const startRest = useRestTimerStore((s) => s.start);
 
-  const handleToggleDone = (setIndex: number) => {
-    const set = entry.sets[setIndex];
-    const wasDone = set?.isDone;
-    toggleSetDone(entry.exerciseId, setIndex);
-    if (!wasDone) {
-      startRest();
-      // 自己ベスト最高重量を超えたセット完了はまっすーが特別に応援する
-      const beatsMax =
-        !!record && set && set.weightKg > 0 && set.weightKg >= record.maxWeight;
-      if (beatsMax) {
-        speak("pb", { exercise: exercise?.nameJa });
-      } else {
-        speak("setDone");
-      }
+  // 回数を入力した瞬間に、過去の実績をもとにまっすーが提案する
+  const handleUpdateSet = (setIndex: number, patch: Partial<DraftSet>) => {
+    const before = entry.sets[setIndex];
+    updateSet(entry.exerciseId, setIndex, patch);
+    if (patch.reps === undefined || patch.reps <= 0 || patch.reps === before?.reps) {
+      return;
     }
+    const merged = { ...before, ...patch };
+    const advice = pickSetAdvice({
+      weightKg: merged.weightKg,
+      reps: merged.reps,
+      record: record ?? null,
+      previous: previous?.entry ?? null,
+      setIndex,
+      totalSets: entry.sets.length,
+      exerciseName: exercise?.nameJa,
+    });
+    if (advice.text) speakText(advice.text, advice.celebrate);
+  };
+
+  // チェックマークは完了マークとレスト開始のみ。コメントは回数入力側で出す
+  const handleToggleDone = (setIndex: number) => {
+    const wasDone = entry.sets[setIndex]?.isDone;
+    toggleSetDone(entry.exerciseId, setIndex);
+    if (!wasDone) startRest();
   };
 
   const handleRemoveSet = (setIndex: number) => {
@@ -113,7 +130,7 @@ export function ExerciseEntryCard({
               key={i}
               index={i}
               set={set}
-              onUpdate={(patch) => updateSet(entry.exerciseId, i, patch)}
+              onUpdate={(patch) => handleUpdateSet(i, patch)}
               onToggleDone={() => handleToggleDone(i)}
               onRemove={() => handleRemoveSet(i)}
             />
