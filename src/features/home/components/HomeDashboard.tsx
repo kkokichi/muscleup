@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import Link from "next/link";
 import { Settings } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -8,13 +7,10 @@ import { FadeIn } from "@/components/common/FadeIn";
 import { useHasMounted } from "@/hooks/useHasMounted";
 import { useHomeStats } from "@/hooks/useHomeStats";
 import { useExercises } from "@/hooks/useExercises";
-import { suggestNextCategory } from "@/services/statsService";
-import { MUSCLE_CATEGORY_IDS } from "@/types";
 import { formatDateJa } from "@/utils/date";
 import { todayISO } from "@/utils/date";
 import { MascotGreetingCard } from "./MascotGreetingCard";
 import { StatsGrid } from "./StatsGrid";
-import { TodayPlanCard } from "./TodayPlanCard";
 import { MuscleLastTrainedCard } from "./MuscleLastTrainedCard";
 import { RecentWorkoutsList } from "./RecentWorkoutsList";
 import { ReminderNudge } from "./ReminderNudge";
@@ -36,16 +32,6 @@ export function HomeDashboard() {
   const mounted = useHasMounted();
   const { stats, isLoading } = useHomeStats();
   const { byId } = useExercises();
-
-  const suggestedCategoryId = useMemo(
-    () =>
-      suggestNextCategory(
-        stats.logs,
-        (id) => byId.get(id)?.categoryId,
-        [...MUSCLE_CATEGORY_IDS],
-      ),
-    [stats.logs, byId],
-  );
 
   if (!mounted || isLoading) {
     return (
@@ -77,12 +63,6 @@ export function HomeDashboard() {
         </FadeIn>
         <ReminderNudge trainedToday={stats.trainedToday} />
         <FadeIn delay={0.05}>
-          <TodayPlanCard
-            suggestedCategoryId={suggestedCategoryId}
-            trainedToday={stats.trainedToday}
-          />
-        </FadeIn>
-        <FadeIn delay={0.08}>
           <MuscleLastTrainedCard logs={stats.logs} exerciseById={byId} />
         </FadeIn>
         <FadeIn delay={0.1}>

@@ -39,37 +39,34 @@ export function MuscleLastTrainedCard({
 
   return (
     <Card className="border-border bg-card">
-      <CardContent className="space-y-2.5 p-4">
-        <p className="text-xs font-semibold text-muted-foreground">
+      <CardContent className="space-y-2 p-3">
+        <p className="text-[11px] font-semibold text-muted-foreground">
           部位別の最終トレーニング日
         </p>
-        <div className="space-y-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {EXERCISE_CATEGORIES.map((category) => {
             const date = lastByCategory.get(category.id);
             const elapsed = date ? elapsedLabel(date) : null;
             return (
-              <div
+              <span
                 key={category.id}
-                className="flex items-center justify-between gap-2 text-sm"
+                className={
+                  "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs tabular-nums " +
+                  (elapsed?.fresh
+                    ? "bg-primary/10 text-primary"
+                    : "bg-secondary text-muted-foreground")
+                }
               >
-                <span className="font-semibold">{category.nameJa}</span>
+                <span className="font-bold text-foreground">{category.nameJa}</span>
                 {date && elapsed ? (
-                  <span className="flex items-center gap-1.5 tabular-nums text-muted-foreground">
-                    <span>{formatDateAxis(date)}</span>
-                    <span
-                      className={
-                        elapsed.fresh
-                          ? "rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary"
-                          : "rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium"
-                      }
-                    >
-                      {elapsed.text}
-                    </span>
+                  <span>
+                    {formatDateAxis(date)}
+                    <span className="ml-1 opacity-80">{elapsed.text}</span>
                   </span>
                 ) : (
-                  <span className="text-xs text-muted-foreground">記録なし</span>
+                  <span>—</span>
                 )}
-              </div>
+              </span>
             );
           })}
         </div>
