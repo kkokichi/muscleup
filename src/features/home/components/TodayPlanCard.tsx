@@ -11,20 +11,9 @@ interface TodayPlanCardProps {
   trainedToday: boolean;
 }
 
-/** 今日はどこを鍛えるかを細く提案する */
+/** 今日はどこを鍛えるかを細く提案する。トレ済みの日は非表示（部位別最終日カードに委ねる） */
 export function TodayPlanCard({ suggestedCategoryId, trainedToday }: TodayPlanCardProps) {
-  if (trainedToday) {
-    return (
-      <Card className="border-primary/30 bg-primary/5">
-        <CardContent className="flex items-center gap-2.5 p-3">
-          <Dumbbell className="size-4 text-primary" />
-          <p className="text-xs font-semibold">
-            今日のトレーニングは完了！ゆっくり回復しよう
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  if (trainedToday) return null;
 
   return (
     <Link href="/workout/new" className="block">
