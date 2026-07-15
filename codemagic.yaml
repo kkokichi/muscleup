@@ -2,13 +2,12 @@
 #
 # 事前準備（Codemagic の Web UI で1回だけ設定）:
 #  1. GitHub リポジトリを Codemagic に接続
-#  2. Settings > Integrations > App Store Connect に API キーを登録し、
-#     その名前を下の integrations.app_store_connect に記入（既定: "AppStoreConnect"）
+#  2. Settings > Integrations > App Store Connect に API キーを登録（名前: "AppStoreConnect"）
+#     ※ 署名ファイルの新規作成には API キーの権限が Admin である必要がある
 #  3. Apple Developer で Bundle ID `com.kkokichi.muscleup` を登録
 #  4. App Store Connect で同じ Bundle ID のアプリを作成
 #
-# 署名は environment.ios_signing による宣言的方式。integrations の API キーを使い、
-# 証明書・プロビジョニングプロファイルの取得/作成/適用を Codemagic が自動で行う。
+# 初回ビルドで配布証明書とプロビジョニングプロファイルを自動作成し、TestFlight へアップロードする。
 workflows:
   ios-appstore:
     name: MuscleUp iOS (App Store)
@@ -17,14 +16,11 @@ workflows:
     integrations:
       app_store_connect: AppStoreConnect
     environment:
-      # App Store 配布用の署名（証明書/プロファイルは自動取得・無ければ自動作成）
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.kkokichi.muscleup
       # Capacitor 8 の CLI は Node 22 以上が必須
       node: 22
       xcode: latest
       vars:
+        BUNDLE_ID: "com.kkokichi.muscleup"
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
     scripts:
@@ -34,12 +30,21 @@ workflows:
         script: |
           npm run build
           npx cap sync ios
+      - name: 署名ファイル（証明書・プロファイル）を作成/取得
+        script: |
+          keychain initialize
+          # 配布証明書: 既存が無ければ新規作成（あれば一覧から取得して保存）
+          app-store-connect certificates create --type IOS_DISTRIBUTION --save \
+            || app-store-connect certificates list --type IOS_DISTRIBUTION --save
+          # App Store 用プロビジョニングプロファイル: 無ければ作成
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE --create
+          keychain add-certificates
+          xcode-project use-profiles
       - name: ビルド番号を採番
         script: |
           cd ios/App
           agvtool new-version -all "$BUILD_NUMBER"
-      - name: 署名プロファイルを適用
-        script: xcode-project use-profiles
       - name: IPA をビルド
         script: |
           xcode-project build-ipa \
