@@ -64,5 +64,6 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        # 最初は TestFlight のみ。審査提出まで自動化するなら submit_to_app_store: true
-        submit_to_testflight: true
+        # App Store Connect へアップロードのみ（TestFlight外部提出/審査提出は
+        # App Store Connect の画面で行う。テスト情報の入力待ちでCIが赤くならない）
+        submit_to_testflight: false
