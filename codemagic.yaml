@@ -16,6 +16,9 @@ workflows:
     integrations:
       app_store_connect: AppStoreConnect
     environment:
+      # Codemagic UI で作成する変数グループ（CERTIFICATE_PRIVATE_KEY を含む）
+      groups:
+        - appstore
       # Capacitor 8 の CLI は Node 22 以上が必須
       node: 22
       xcode: latest
@@ -33,12 +36,11 @@ workflows:
       - name: 署名ファイル（証明書・プロファイル）を作成/取得
         script: |
           keychain initialize
-          # 配布証明書: 既存が無ければ新規作成（あれば一覧から取得して保存）
-          app-store-connect certificates create --type IOS_DISTRIBUTION --save \
-            || app-store-connect certificates list --type IOS_DISTRIBUTION --save
-          # App Store 用プロビジョニングプロファイル: 無ければ作成
+          # 用意した秘密鍵で配布証明書を作成/再利用し、App Store用プロファイルを作成
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE --create
+            --type IOS_APP_STORE \
+            --certificate-key "@env:CERTIFICATE_PRIVATE_KEY" \
+            --create
           keychain add-certificates
           xcode-project use-profiles
       - name: ビルド番号を採番
