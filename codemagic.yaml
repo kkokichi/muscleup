@@ -35,14 +35,19 @@ workflows:
           npx cap sync ios
       - name: 署名ファイル（証明書・プロファイル）を作成/取得
         script: |
+          set -e
           keychain initialize
+          # 秘密鍵が変数から読めているか確認（中身は出さず文字数のみ。0なら未反映）
+          echo "CERTIFICATE_PRIVATE_KEY length: ${#CERTIFICATE_PRIVATE_KEY}"
+          echo "TEAM(FYI): ${APP_STORE_CONNECT_ISSUER_ID:+issuer-present}"
           # 用意した秘密鍵で配布証明書を作成/再利用し、App Store用プロファイルを作成
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --certificate-key "@env:CERTIFICATE_PRIVATE_KEY" \
-            --create
+            --create \
+            --verbose
           keychain add-certificates
-          xcode-project use-profiles
+          xcode-project use-profiles --verbose
       - name: ビルド番号を採番
         script: |
           cd ios/App
