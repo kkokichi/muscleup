@@ -2,29 +2,31 @@
 #
 # 事前準備（Codemagic の Web UI で1回だけ設定）:
 #  1. GitHub リポジトリを Codemagic に接続
-#  2. Teams > Integrations > App Store Connect に API キーを登録し、
+#  2. Settings > Integrations > App Store Connect に API キーを登録し、
 #     その名前を下の integrations.app_store_connect に記入（既定: "AppStoreConnect"）
 #  3. Apple Developer で Bundle ID `com.kkokichi.muscleup` を登録
-#     （capacitor.config.ts / Xcode の Bundle ID と一致させること）
 #  4. App Store Connect で同じ Bundle ID のアプリを作成
 #
-# これで push するたびに CI がビルド→署名→TestFlight へアップロードする。
+# 署名は environment.ios_signing による宣言的方式。integrations の API キーを使い、
+# 証明書・プロビジョニングプロファイルの取得/作成/適用を Codemagic が自動で行う。
 workflows:
   ios-appstore:
     name: MuscleUp iOS (App Store)
     max_build_duration: 60
     instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: AppStoreConnect
     environment:
+      # App Store 配布用の署名（証明書/プロファイルは自動取得・無ければ自動作成）
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.kkokichi.muscleup
       # Capacitor 8 の CLI は Node 22 以上が必須
       node: 22
       xcode: latest
       vars:
-        BUNDLE_ID: "com.kkokichi.muscleup"
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
-      # App Store Connect API キー（UI で登録した名前）
-    integrations:
-      app_store_connect: AppStoreConnect
     scripts:
       - name: 依存関係のインストール
         script: npm ci
@@ -32,17 +34,12 @@ workflows:
         script: |
           npm run build
           npx cap sync ios
-      - name: コード署名のセットアップ
-        script: |
-          keychain initialize
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE --create
-          keychain add-certificates
-          xcode-project use-profiles
       - name: ビルド番号を採番
         script: |
           cd ios/App
           agvtool new-version -all "$BUILD_NUMBER"
+      - name: 署名プロファイルを適用
+        script: xcode-project use-profiles
       - name: IPA をビルド
         script: |
           xcode-project build-ipa \
@@ -54,5 +51,5 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        # 最初は TestFlight のみ。審査提出は手動 or submit_to_app_store: true
+        # 最初は TestFlight のみ。審査提出まで自動化するなら submit_to_app_store: true
         submit_to_testflight: true
