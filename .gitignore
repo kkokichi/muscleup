@@ -43,3 +43,6 @@ next-env.d.ts
 # Claude Code local settings
 .claude/settings.local.json
 .claude/muscleup-claude-backup/
+
+# App Store 用スクリーンショット（生成物。scripts/gen-screenshots.mjs で再生成）
+/appstore-screenshots/*.png
