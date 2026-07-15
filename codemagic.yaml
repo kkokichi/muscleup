@@ -1,0 +1,57 @@
+# Codemagic クラウドMacビルド設定（Windowsだけで App Store 提出するための構成）
+#
+# 事前準備（Codemagic の Web UI で1回だけ設定）:
+#  1. GitHub リポジトリを Codemagic に接続
+#  2. Teams > Integrations > App Store Connect に API キーを登録し、
+#     その名前を下の integrations.app_store_connect に記入（既定: "AppStoreConnect"）
+#  3. Apple Developer で Bundle ID `com.kkokichi.muscleup` を登録
+#     （capacitor.config.ts / Xcode の Bundle ID と一致させること）
+#  4. App Store Connect で同じ Bundle ID のアプリを作成
+#
+# これで push するたびに CI がビルド→署名→TestFlight へアップロードする。
+workflows:
+  ios-appstore:
+    name: MuscleUp iOS (App Store)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      node: 20
+      xcode: latest
+      vars:
+        BUNDLE_ID: "com.kkokichi.muscleup"
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
+        XCODE_SCHEME: "App"
+      # App Store Connect API キー（UI で登録した名前）
+    integrations:
+      app_store_connect: AppStoreConnect
+    scripts:
+      - name: 依存関係のインストール
+        script: npm ci
+      - name: Web ビルド + Capacitor 同期
+        script: |
+          npm run build
+          npx cap sync ios
+      - name: コード署名のセットアップ
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: ビルド番号を採番
+        script: |
+          cd ios/App
+          agvtool new-version -all "$BUILD_NUMBER"
+      - name: IPA をビルド
+        script: |
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        # 最初は TestFlight のみ。審査提出は手動 or submit_to_app_store: true
+        submit_to_testflight: true
