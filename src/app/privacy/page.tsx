@@ -75,7 +75,13 @@ export default function PrivacyPage() {
           <p>
             本ポリシーに関するお問い合わせは以下までご連絡ください。
             <br />
-            連絡先: <span className="font-semibold">[連絡先メールアドレスを記入]</span>
+            連絡先:{" "}
+            <a
+              href="mailto:ichinose.koki.1218@gmail.com"
+              className="font-semibold text-primary underline"
+            >
+              ichinose.koki.1218@gmail.com
+            </a>
           </p>
         </Section>
       </div>
