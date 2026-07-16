@@ -53,9 +53,22 @@ export function WorkoutRecorder() {
 
   useEffect(() => {
     if (!mounted) return;
-    if (!useWorkoutDraftStore.getState().draft) startWorkout();
-    else ensureActiveLogId();
-  }, [mounted, startWorkout, ensureActiveLogId]);
+    const existing = useWorkoutDraftStore.getState().draft;
+    if (!existing) {
+      startWorkout();
+      return;
+    }
+    ensureActiveLogId();
+    // 日付が変わったら、未入力の下書きの「記録する日」を今日へ更新する
+    // （入力済みの下書きは、過去日として意図的に記録している場合があるため触らない）
+    if (
+      existing.entries.length === 0 &&
+      !existing.firstInputAt &&
+      existing.date !== todayISO()
+    ) {
+      setDate(todayISO());
+    }
+  }, [mounted, startWorkout, ensureActiveLogId, setDate]);
 
   // 終了後に再度開いたとき、その日の保存済みワークアウトを読み込んで続きを編集できるようにする。
   // 入力中の下書き（種目が既にある状態）は上書きしない。

@@ -47,7 +47,6 @@ export function ExerciseEntryCard({
       record: record ?? null,
       previous: previous?.entry ?? null,
       setIndex,
-      totalSets: entry.sets.length,
       exerciseName: exercise?.nameJa,
     });
     if (advice.text) speakText(advice.text, advice.celebrate);

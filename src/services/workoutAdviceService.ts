@@ -15,10 +15,8 @@ export interface SetAdviceInput {
   record: ExerciseRecord | null;
   /** 前回セッションの同種目の記録。なければ null */
   previous: WorkoutEntry | null;
-  /** 何番目のセットか（0始まり） */
+  /** 何番目のセットか（0始まり）。前回同セットとの比較に使う */
   setIndex: number;
-  /** この種目の総セット数 */
-  totalSets: number;
   exerciseName?: string;
 }
 
@@ -39,7 +37,7 @@ function pick(candidates: string[]): string {
  * 優先度の高い達成から順に評価して最初に当てはまった提案を返す。
  */
 export function pickSetAdvice(input: SetAdviceInput): SetAdvice {
-  const { weightKg, reps, rpe, record, previous, setIndex, totalSets } = input;
+  const { weightKg, reps, rpe, record, previous, setIndex } = input;
 
   // 回数が入っていないセットには声かけしない（呼び出し側で握りつぶす）
   if (reps <= 0) return { text: "", celebrate: false };
@@ -132,34 +130,13 @@ export function pickSetAdvice(input: SetAdviceInput): SetAdvice {
     };
   }
 
-  // --- H. ラストセット完了 ---
-  const remaining = totalSets - (setIndex + 1);
-  if (remaining === 0) {
-    return {
-      text: pick([
-        `ラストまでやり切りました。今日の頑張り、しっかり刻まれてるッス`,
-        `お疲れさまッス！最後まで質を落とさなかったのが素晴らしい`,
-      ]),
-      celebrate: false,
-    };
-  }
-
-  // --- I. 途中セット（残りあり） ---
-  if (remaining >= 1) {
-    return {
-      text: pick([
-        `いいペースッス。この強度をあと${remaining}セット、集中していきましょう`,
-        `ナイスセット。あと${remaining}セット、同じ集中でいきましょう`,
-      ]),
-      celebrate: false,
-    };
-  }
-
-  // --- J. 汎用（実績データが無い初回など） ---
+  // --- H. 汎用（このセット単体への声かけ。後続セットは見ない） ---
   return {
     text: pick([
       `ナイスセット。次も呼吸を止めず、下ろす動作を丁寧にッス`,
       `いい動きッス。フォームを保てば重量は後からついてきます`,
+      `${reps}回しっかり効かせました。この積み重ねが力になるッス`,
+      `いい集中ッス。1セットずつ丁寧に積み上げていきましょう`,
     ]),
     celebrate: false,
   };
