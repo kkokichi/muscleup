@@ -176,11 +176,12 @@ export const useWorkoutDraftStore = create<WorkoutDraftState>()(
         if (!draft) return;
         set({
           draft: {
-            ...updateEntry(draft, exerciseId, (sets) => [
-              ...sets,
-              // 新規セットは前のセット値を引き継がず、常に初期値から始める
-              { ...DEFAULT_SET, ...preset },
-            ]),
+            ...updateEntry(draft, exerciseId, (sets) => {
+              // 直前のセットの重量・回数を引き継ぐ（完了チェックは外す）
+              const last = sets[sets.length - 1];
+              const base = last ? { ...last, isDone: false } : { ...DEFAULT_SET };
+              return [...sets, { ...base, ...preset }];
+            }),
             ...touchInput(draft),
           },
         });

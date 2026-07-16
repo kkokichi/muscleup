@@ -35,11 +35,15 @@ export function MuscleBalanceView({ logs }: { logs: WorkoutLog[] }) {
     [logs, byId, since],
   );
 
+  // 記録のある部位のみ表示する
+  const trainedCategories = EXERCISE_CATEGORIES.filter(
+    (c) => (categoryVolume.get(c.id)?.sets ?? 0) > 0,
+  );
   const maxSets = Math.max(
     1,
-    ...EXERCISE_CATEGORIES.map((c) => categoryVolume.get(c.id)?.sets ?? 0),
+    ...trainedCategories.map((c) => categoryVolume.get(c.id)?.sets ?? 0),
   );
-  const totalSets = EXERCISE_CATEGORIES.reduce(
+  const totalSets = trainedCategories.reduce(
     (sum, c) => sum + (categoryVolume.get(c.id)?.sets ?? 0),
     0,
   );
@@ -90,7 +94,7 @@ export function MuscleBalanceView({ logs }: { logs: WorkoutLog[] }) {
                     計 {totalSets} セット
                   </p>
                 </div>
-                {EXERCISE_CATEGORIES.map((cat: { id: MuscleCategoryId; nameJa: string }) => {
+                {trainedCategories.map((cat: { id: MuscleCategoryId; nameJa: string }) => {
                   const stat = categoryVolume.get(cat.id);
                   const sets = stat?.sets ?? 0;
                   return (
