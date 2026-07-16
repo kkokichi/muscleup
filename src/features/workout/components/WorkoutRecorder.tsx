@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { CalendarDays, Clock, Plus } from "lucide-react";
 import type { ExerciseRecord, WorkoutEntry, WorkoutLog } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,13 @@ import { useWorkoutLogs } from "@/hooks/useWorkoutLogs";
 import { useRecords } from "@/hooks/useRecords";
 import { useWorkoutDraftStore } from "@/stores/workoutDraftStore";
 import { calcCategoryLastTrained } from "@/services/statsService";
-import { formatDateJa, formatElapsed, formatTimeJa, todayISO } from "@/utils/date";
+import {
+  formatDateJa,
+  formatElapsed,
+  formatTimeJa,
+  isoToLocalDate,
+  todayISO,
+} from "@/utils/date";
 import { useAutoSaveWorkout } from "../hooks/useAutoSaveWorkout";
 import { ExerciseEntryCard } from "./ExerciseEntryCard";
 import { ExercisePickerSheet } from "./ExercisePickerSheet";
@@ -33,7 +38,6 @@ function lastSessionFor(
 
 export function WorkoutRecorder() {
   const mounted = useHasMounted();
-  const router = useRouter();
   const {
     draft,
     startWorkout,
@@ -47,9 +51,21 @@ export function WorkoutRecorder() {
   const { exercises, byId, reload: reloadExercises } = useExercises();
   const { logs, isLoading: logsLoading } = useWorkoutLogs();
   const { records } = useRecords();
-  const { status: saveStatus, saveNow } = useAutoSaveWorkout(draft);
+  // 自動保存（終了ボタンは廃止し、編集のたびにバックグラウンドで保存する）
+  const { saveNow } = useAutoSaveWorkout(draft);
   const [pickerOpen, setPickerOpen] = useState(false);
   const hydratedRef = useRef(false);
+
+  // 画面を離れるときに最新状態を確実に保存する（デバウンス保存の取りこぼし防止）
+  const saveNowRef = useRef(saveNow);
+  useEffect(() => {
+    saveNowRef.current = saveNow;
+  }, [saveNow]);
+  useEffect(() => {
+    return () => {
+      void saveNowRef.current();
+    };
+  }, []);
 
   useEffect(() => {
     if (!mounted) return;
@@ -58,17 +74,16 @@ export function WorkoutRecorder() {
       startWorkout();
       return;
     }
-    ensureActiveLogId();
-    // 日付が変わったら、未入力の下書きの「記録する日」を今日へ更新する
-    // （入力済みの下書きは、過去日として意図的に記録している場合があるため触らない）
-    if (
-      existing.entries.length === 0 &&
-      !existing.firstInputAt &&
-      existing.date !== todayISO()
-    ) {
-      setDate(todayISO());
+    // その日のうちに触れた下書きは継続する。日付が変わっていれば、前日分は
+    // 自動保存済みなので、今日の新しい下書きを開始する（＝終了ボタンの代替）。
+    const lastActiveDay = isoToLocalDate(existing.lastInputAt ?? existing.startedAt);
+    if (lastActiveDay !== todayISO()) {
+      clear();
+      startWorkout();
+    } else {
+      ensureActiveLogId();
     }
-  }, [mounted, startWorkout, ensureActiveLogId, setDate]);
+  }, [mounted, startWorkout, ensureActiveLogId, clear]);
 
   // 終了後に再度開いたとき、その日の保存済みワークアウトを読み込んで続きを編集できるようにする。
   // 入力中の下書き（種目が既にある状態）は上書きしない。
@@ -118,28 +133,9 @@ export function WorkoutRecorder() {
     setPickerOpen(false);
   };
 
-  const handleFinish = async () => {
-    await saveNow();
-    clear();
-    router.push("/");
-  };
-
   return (
     <div>
-      <PageHeader
-        title="ワークアウト"
-        subtitle={formatDateJa(draft.date)}
-        action={
-          <Button
-            size="lg"
-            variant="secondary"
-            disabled={saveStatus === "saving"}
-            onClick={handleFinish}
-          >
-            終了
-          </Button>
-        }
-      />
+      <PageHeader title="ワークアウト" subtitle={formatDateJa(draft.date)} />
 
       <label className="mb-3 flex items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2.5">
         <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">

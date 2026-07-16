@@ -30,6 +30,11 @@ export function formatTimeJa(isoDateTime: string): string {
   return format(parseISO(isoDateTime), "HH:mm");
 }
 
+/** ISO日時 → ローカルタイムゾーンの日付 (YYYY-MM-DD) */
+export function isoToLocalDate(isoDateTime: string): string {
+  return format(parseISO(isoDateTime), "yyyy-MM-dd");
+}
+
 /** 2つのISO日時の差（分）。to - from */
 export function minutesBetween(fromISO: string, toISO: string): number {
   return Math.max(0, differenceInMinutes(parseISO(toISO), parseISO(fromISO)));
