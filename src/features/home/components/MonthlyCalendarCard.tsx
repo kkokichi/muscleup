@@ -1,8 +1,16 @@
 import Link from "next/link";
 import { CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import type { WorkoutLog } from "@/types";
-import { buildActivityByDate } from "@/services/statsService";
+import type { Exercise, WorkoutLog } from "@/types";
+import {
+  buildActivityByDate,
+  calcDominantCategoryByDate,
+} from "@/services/statsService";
+import {
+  EXERCISE_CATEGORIES,
+  categoryColor,
+  categoryNameJa,
+} from "@/data/categories";
 import { todayISO } from "@/utils/date";
 import { cn } from "@/lib/utils";
 
@@ -27,12 +35,25 @@ function monthDays(today: string) {
   };
 }
 
-/** 月間カレンダー。日付タップでその日の記録一覧へ移動する */
-export function MonthlyCalendarCard({ logs }: { logs: WorkoutLog[] }) {
+interface MonthlyCalendarCardProps {
+  logs: WorkoutLog[];
+  exerciseById: Map<string, Exercise>;
+}
+
+/** 月間カレンダー。各記録日はその日の主要部位の色で塗り分ける */
+export function MonthlyCalendarCard({ logs, exerciseById }: MonthlyCalendarCardProps) {
   const today = todayISO();
   const activity = buildActivityByDate(logs);
+  const dominant = calcDominantCategoryByDate(
+    logs,
+    (id) => exerciseById.get(id)?.categoryId,
+  );
   const month = monthDays(today);
   const trainedThisMonth = month.days.filter((day) => activity.has(day.iso)).length;
+
+  // その月に登場する部位のみ、カテゴリ定義順で凡例に出す
+  const present = new Set(month.days.map((d) => dominant.get(d.iso)).filter(Boolean));
+  const legendCategories = EXERCISE_CATEGORIES.filter((c) => present.has(c.id));
 
   return (
     <Card className="h-full border-border bg-card">
@@ -65,15 +86,28 @@ export function MonthlyCalendarCard({ logs }: { logs: WorkoutLog[] }) {
           {month.days.map((day) => {
             const active = activity.has(day.iso);
             const isToday = day.iso === today;
+            const category = active ? dominant.get(day.iso) : undefined;
+            const color = category ? categoryColor(category) : undefined;
             return (
               <Link
                 key={day.iso}
                 href={`/history/detail?date=${day.iso}`}
                 aria-label={`${day.iso}の記録詳細`}
+                style={
+                  color
+                    ? {
+                        backgroundColor: color,
+                        color: "#fff",
+                        textShadow: "0 1px 2px rgba(0,0,0,0.35)",
+                      }
+                    : undefined
+                }
                 className={cn(
                   "flex aspect-square items-center justify-center rounded-lg text-[13px] font-semibold tabular-nums transition-transform active:scale-90",
                   active
-                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
+                    ? color
+                      ? "shadow-sm"
+                      : "bg-primary text-primary-foreground shadow-sm"
                     : "bg-secondary text-muted-foreground",
                   isToday && "ring-2 ring-primary ring-offset-1 ring-offset-card",
                 )}
@@ -83,6 +117,23 @@ export function MonthlyCalendarCard({ logs }: { logs: WorkoutLog[] }) {
             );
           })}
         </div>
+
+        {legendCategories.length > 0 && (
+          <div className="mt-2.5 flex flex-wrap gap-x-2.5 gap-y-1">
+            {legendCategories.map((category) => (
+              <span
+                key={category.id}
+                className="flex items-center gap-1 text-[10px] text-muted-foreground"
+              >
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: categoryColor(category.id) }}
+                />
+                {categoryNameJa(category.id)}
+              </span>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

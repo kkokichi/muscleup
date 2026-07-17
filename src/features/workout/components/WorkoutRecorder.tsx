@@ -158,7 +158,7 @@ export function WorkoutRecorder() {
       )}
 
       {/* レストタイマーはスクロールしても常に見えるよう上部に固定する */}
-      <div className="sticky top-0 z-30 -mx-4 mb-4 flex items-center justify-between gap-2 border-b border-border/60 bg-background/85 px-4 py-2 backdrop-blur">
+      <div className="sticky top-[env(safe-area-inset-top)] z-30 -mx-4 mb-4 flex items-center justify-between gap-2 border-b border-border/60 bg-background/85 px-4 py-2 backdrop-blur">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="size-3.5" />
           {draft.firstInputAt ? (

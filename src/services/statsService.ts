@@ -159,6 +159,44 @@ export function buildActivityByDate(logs: WorkoutLog[]): Map<string, DayActivity
   return map;
 }
 
+/**
+ * 日付(YYYY-MM-DD)ごとに「最も割合の大きい部位（カテゴリ）」を返す。
+ * 割合はその日の部位別セット数で判定する（同数はカテゴリ検出順で先勝ち）。
+ */
+export function calcDominantCategoryByDate(
+  logs: WorkoutLog[],
+  categoryOf: (exerciseId: string) => string | undefined,
+): Map<string, string> {
+  // date -> (category -> セット数)
+  const byDate = new Map<string, Map<string, number>>();
+  for (const log of logs) {
+    let dayMap = byDate.get(log.date);
+    if (!dayMap) {
+      dayMap = new Map();
+      byDate.set(log.date, dayMap);
+    }
+    for (const entry of log.entries) {
+      const cat = categoryOf(entry.exerciseId);
+      if (!cat) continue;
+      dayMap.set(cat, (dayMap.get(cat) ?? 0) + entry.sets.length);
+    }
+  }
+
+  const result = new Map<string, string>();
+  for (const [date, dayMap] of byDate) {
+    let best: string | null = null;
+    let bestSets = 0;
+    for (const [cat, sets] of dayMap) {
+      if (sets > bestSets) {
+        bestSets = sets;
+        best = cat;
+      }
+    }
+    if (best) result.set(date, best);
+  }
+  return result;
+}
+
 /** 部位（カテゴリ）ごとに、最後にトレーニングした日時(ISO)を返す */
 export function calcCategoryLastTrained(
   logs: WorkoutLog[],
