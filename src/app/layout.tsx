@@ -29,6 +29,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  // ノッチ/ダイナミックアイランド対応：セーフエリアのenv()を有効化する
+  viewportFit: "cover",
 };
 
 const themeInitScript = `

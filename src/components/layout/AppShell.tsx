@@ -5,7 +5,7 @@ import { MascotToast } from "@/features/mascot/components/MascotToast";
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto min-h-dvh w-full max-w-md">
-      <main className="px-4 pb-32 pt-6">{children}</main>
+      <main className="px-4 pb-32 pt-safe">{children}</main>
       <TabBar />
       <MascotToast />
     </div>

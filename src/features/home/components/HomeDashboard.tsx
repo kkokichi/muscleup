@@ -68,7 +68,7 @@ export function HomeDashboard() {
         <FadeIn delay={0.1}>
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
-              <MonthlyCalendarCard logs={stats.logs} />
+              <MonthlyCalendarCard logs={stats.logs} exerciseById={byId} />
             </div>
             <VolumeSummaryCard logs={stats.logs} variant="compact" />
           </div>

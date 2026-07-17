@@ -141,6 +141,11 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* 上部のセーフエリア（ノッチ/ダイナミックアイランド）＋基本の余白 */
+@utility pt-safe {
+  padding-top: calc(env(safe-area-inset-top) + 1.5rem);
+}
+
 /* マスコット祝福時の紙吹雪（framer-motionに依存しないCSSアニメーション） */
 @keyframes mascot-confetti-fall {
   from {

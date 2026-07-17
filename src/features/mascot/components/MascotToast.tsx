@@ -46,7 +46,7 @@ export function MascotToast() {
     <div
       key={currentMessage.id + currentMessage.text}
       onClick={dismiss}
-      className="fixed inset-x-0 top-4 z-50 mx-auto w-[calc(100%-2rem)] max-w-sm"
+      className="fixed inset-x-0 top-[calc(env(safe-area-inset-top)+1rem)] z-50 mx-auto w-[calc(100%-2rem)] max-w-sm"
     >
       <div className="relative flex items-center gap-3 rounded-2xl border border-border bg-popover/95 p-3 pr-4 shadow-2xl backdrop-blur-xl">
         {isCelebration && <Confetti />}
