@@ -54,10 +54,27 @@ export function ProgressView() {
   // 未選択時は最初の部位を自動選択（導出値）
   const selectedCategory = userSelectedCategory ?? trainedCategories[0] ?? null;
 
-  /** 選択中の部位に属する、記録のある種目 */
+  /** 種目ごとの記録セッション数（多い順の並び替えに使う） */
+  const sessionCount = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const log of logs) {
+      const seen = new Set<string>();
+      for (const entry of log.entries) {
+        if (seen.has(entry.exerciseId)) continue;
+        seen.add(entry.exerciseId);
+        map.set(entry.exerciseId, (map.get(entry.exerciseId) ?? 0) + 1);
+      }
+    }
+    return map;
+  }, [logs]);
+
+  /** 選択中の部位に属する、記録のある種目（記録の多い順・同数は新しい順） */
   const exercisesInCategory = useMemo(
-    () => trainedIds.filter((id) => byId.get(id)?.categoryId === selectedCategory),
-    [trainedIds, byId, selectedCategory],
+    () =>
+      trainedIds
+        .filter((id) => byId.get(id)?.categoryId === selectedCategory)
+        .sort((a, b) => (sessionCount.get(b) ?? 0) - (sessionCount.get(a) ?? 0)),
+    [trainedIds, byId, selectedCategory, sessionCount],
   );
 
   // 選択中の種目が部位内に無ければ、その部位の先頭を選ぶ（導出値）
