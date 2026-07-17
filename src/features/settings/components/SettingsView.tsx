@@ -1,19 +1,29 @@
 "use client";
 
-import { Bell, Info } from "lucide-react";
+import { Bell, Info, Timer } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DisplayNameInput } from "@/components/common/DisplayNameInput";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useHasMounted } from "@/hooks/useHasMounted";
 import { useUserName } from "@/hooks/useUserName";
+import { useRestTimerStore } from "@/stores/restTimerStore";
+import { cn } from "@/lib/utils";
 import { useReminderSettings } from "../hooks/useReminderSettings";
 import { AccountSection } from "./AccountSection";
+
+const REST_PRESETS = [30, 60, 90, 120, 150, 180] as const;
+
+function restLabel(seconds: number): string {
+  return seconds % 60 === 0 ? `${seconds / 60}分` : `${seconds}秒`;
+}
 
 export function SettingsView() {
   const mounted = useHasMounted();
   const { name, saveName } = useUserName();
   const { settings, permission, update, enable } = useReminderSettings();
+  const restDuration = useRestTimerStore((s) => s.defaultDurationSeconds);
+  const setRestDuration = useRestTimerStore((s) => s.setDefaultDuration);
 
   return (
     <div>
@@ -32,6 +42,35 @@ export function SettingsView() {
             />
             <p className="mt-2 text-[11px] text-muted-foreground">
               チェックインやアドバイス投稿で表示される名前です
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border bg-card">
+          <CardContent className="space-y-3 p-4">
+            <div className="flex items-center gap-2">
+              <Timer className="size-4 text-primary" />
+              <p className="text-sm font-semibold">レストタイマーの時間</p>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {REST_PRESETS.map((seconds) => (
+                <button
+                  key={seconds}
+                  type="button"
+                  onClick={() => setRestDuration(seconds)}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+                    mounted && restDuration === seconds
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-foreground",
+                  )}
+                >
+                  {restLabel(seconds)}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              記録画面の「レスト」開始時に使う時間です（「＋30秒」で延長できます）
             </p>
           </CardContent>
         </Card>

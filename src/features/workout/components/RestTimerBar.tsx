@@ -5,8 +5,6 @@ import { Plus, Timer, X } from "lucide-react";
 import { useRestTimerStore } from "@/stores/restTimerStore";
 import { cn } from "@/lib/utils";
 
-const PRESETS = [60, 90, 120] as const;
-
 function formatRemaining(seconds: number): string {
   const safe = Math.max(0, seconds);
   const minutes = Math.floor(safe / 60);
@@ -14,17 +12,18 @@ function formatRemaining(seconds: number): string {
   return `${minutes}:${String(rest).padStart(2, "0")}`;
 }
 
-function presetLabel(seconds: number): string {
-  if (seconds === 90) return "90秒";
-  return `${seconds / 60}分`;
+function durationLabel(seconds: number): string {
+  if (seconds % 60 === 0) return `${seconds / 60}分`;
+  return `${seconds}秒`;
 }
 
 /**
- * レストタイマーのコンパクト表示。ワークアウト画面上部（旧・保存ステータスの位置）に置き、
- * 待機中はプリセットのチップ、計測中はカウントダウンと操作を出す。
+ * レストタイマーのコンパクト表示。開始秒数は設定（defaultDurationSeconds）に従う。
+ * 待機中は開始ボタン、計測中はカウントダウン・+30秒・停止を出す。
  */
 export function RestTimerBar() {
-  const { endsAt, start, stop, addSeconds } = useRestTimerStore();
+  const { endsAt, defaultDurationSeconds, start, stop, addSeconds } =
+    useRestTimerStore();
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
@@ -44,19 +43,14 @@ export function RestTimerBar() {
 
   if (!active) {
     return (
-      <div className="flex items-center gap-1">
-        <Timer className="size-3.5 shrink-0 text-muted-foreground" />
-        {PRESETS.map((seconds) => (
-          <button
-            key={seconds}
-            type="button"
-            onClick={() => start(seconds)}
-            className="rounded-full bg-secondary px-2 py-1 text-[11px] font-semibold text-foreground transition-colors active:bg-secondary/70"
-          >
-            {presetLabel(seconds)}
-          </button>
-        ))}
-      </div>
+      <button
+        type="button"
+        onClick={() => start()}
+        className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground transition-colors active:bg-secondary/70"
+      >
+        <Timer className="size-3.5 text-primary" />
+        レスト {durationLabel(defaultDurationSeconds)}
+      </button>
     );
   }
 
@@ -75,9 +69,10 @@ export function RestTimerBar() {
         type="button"
         aria-label="レストを30秒延長"
         onClick={() => addSeconds(30)}
-        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-background/20 transition-transform active:scale-90"
+        className="flex h-6 shrink-0 items-center gap-0.5 rounded-full bg-background/20 px-1.5 text-[11px] font-bold transition-transform active:scale-90"
       >
-        <Plus className="size-3.5" />
+        <Plus className="size-3" />
+        30秒
       </button>
       <button
         type="button"

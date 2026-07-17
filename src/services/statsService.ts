@@ -294,9 +294,8 @@ export function calcVolumeSummary(
   };
 }
 
-/** 総負荷量を kg / t で見やすく整形（1000kg以上はトン表記） */
+/** 総負荷量を kg 単位で整形（3桁区切り） */
 export function formatVolume(kg: number): string {
-  if (kg >= 1000) return `${(kg / 1000).toFixed(2)} t`;
   return `${Math.round(kg).toLocaleString()} kg`;
 }
 
