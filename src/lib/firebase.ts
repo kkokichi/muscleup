@@ -1,9 +1,12 @@
+import { Capacitor } from "@capacitor/core";
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import {
   GoogleAuthProvider,
   getAuth,
   getRedirectResult,
   onAuthStateChanged,
+  signInWithCredential,
   signInWithPopup,
   signInWithRedirect,
   signOut,
@@ -135,6 +138,29 @@ export function subscribeAuth(cb: (user: User | null) => void): () => void {
 }
 
 export async function signInWithGoogle(): Promise<User> {
+  if (Capacitor.isNativePlatform()) {
+    const result = await FirebaseAuthentication.signInWithGoogle({
+      skipNativeAuth: true,
+    });
+    const idToken = result.credential?.idToken ?? null;
+    const accessToken = result.credential?.accessToken ?? null;
+
+    if (!idToken && !accessToken) {
+      throw Object.assign(
+        new Error("Google認証情報を取得できませんでした。"),
+        { code: "auth/invalid-credential" },
+      );
+    }
+
+    const credential = GoogleAuthProvider.credential(idToken, accessToken);
+    const userCredential = await signInWithCredential(
+      getAuth(getFirebaseApp()),
+      credential,
+    );
+    rememberGoogleSession();
+    return userCredential.user;
+  }
+
   const provider = new GoogleAuthProvider();
   const credential = await signInWithPopup(getAuth(getFirebaseApp()), provider);
   rememberGoogleSession();
@@ -154,6 +180,9 @@ export async function getGoogleRedirectResult(): Promise<User | null> {
 }
 
 export async function signOutUser(): Promise<void> {
+  if (Capacitor.isNativePlatform()) {
+    await FirebaseAuthentication.signOut().catch(() => undefined);
+  }
   await signOut(getAuth(getFirebaseApp()));
   clearKnownGoogleSession();
 }

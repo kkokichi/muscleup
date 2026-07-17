@@ -1,3 +1,5 @@
+/// <reference types="@capacitor-firebase/authentication" />
+
 import type { CapacitorConfig } from "@capacitor/cli";
 
 /**
@@ -18,6 +20,10 @@ const config: CapacitorConfig = {
     backgroundColor: "#0a0a0b",
   },
   plugins: {
+    FirebaseAuthentication: {
+      providers: ["google.com"],
+      skipNativeAuth: true,
+    },
     SplashScreen: {
       launchShowDuration: 800,
       backgroundColor: "#0a0a0b",
