@@ -24,16 +24,20 @@ import { ExerciseEntryCard } from "./ExerciseEntryCard";
 import { ExercisePickerSheet } from "./ExercisePickerSheet";
 import { RestTimerBar } from "./RestTimerBar";
 
-/** 直近ログから種目の前回セッション（日付+全セット）を引く */
-function lastSessionFor(
+/** 種目IDごとの過去セッション（新しい順・空セットは除外）をまとめる */
+function buildSessionIndex(
   logs: WorkoutLog[],
-  exerciseId: string,
-): { date: string; entry: WorkoutEntry } | null {
+): Map<string, { date: string; entry: WorkoutEntry }[]> {
+  const index = new Map<string, { date: string; entry: WorkoutEntry }[]>();
   for (const log of logs) {
-    const entry = log.entries.find((e) => e.exerciseId === exerciseId);
-    if (entry && entry.sets.length > 0) return { date: log.date, entry };
+    for (const entry of log.entries) {
+      if (entry.sets.length === 0) continue;
+      const sessions = index.get(entry.exerciseId);
+      if (sessions) sessions.push({ date: log.date, entry });
+      else index.set(entry.exerciseId, [{ date: log.date, entry }]);
+    }
   }
-  return null;
+  return index;
 }
 
 export function WorkoutRecorder() {
@@ -97,6 +101,12 @@ export function WorkoutRecorder() {
       resumeFromLog(savedToday);
     }
   }, [mounted, logsLoading, logs, resumeFromLog]);
+
+  // 記録中の日付の分は「過去の履歴」ではないので除外する（下書きに同じ内容が入っている）
+  const sessionIndex = useMemo(
+    () => buildSessionIndex(logs.filter((log) => log.date !== draft?.date)),
+    [logs, draft?.date],
+  );
 
   const recordByExercise = useMemo(() => {
     const map = new Map<string, ExerciseRecord>();
@@ -171,28 +181,31 @@ export function WorkoutRecorder() {
       </div>
 
       <div className="space-y-4">
-        {draft.entries.map((entry, i) => (
-          <FadeIn key={entry.exerciseId} delay={i * 0.05}>
-            <ExerciseEntryCard
-              entry={entry}
-              exercise={byId.get(entry.exerciseId)}
-              previous={lastSessionFor(logs, entry.exerciseId)}
-              record={recordByExercise.get(entry.exerciseId) ?? null}
-            />
-          </FadeIn>
-        ))}
+        {draft.entries.map((entry, i) => {
+          const sessions = sessionIndex.get(entry.exerciseId) ?? [];
+          return (
+            <FadeIn key={entry.exerciseId} delay={i * 0.05}>
+              <ExerciseEntryCard
+                entry={entry}
+                exercise={byId.get(entry.exerciseId)}
+                previous={sessions[0] ?? null}
+                history={sessions}
+                record={recordByExercise.get(entry.exerciseId) ?? null}
+              />
+            </FadeIn>
+          );
+        })}
 
-        {draft.entries.length === 0 && (
-          <Button
-            variant="outline"
-            size="lg"
-            className="w-full border-dashed"
-            onClick={() => setPickerOpen(true)}
-          >
-            <Plus className="size-4" data-icon="inline-start" />
-            種目を追加
-          </Button>
-        )}
+        {/* 種目追加は一覧の末尾に置く（フローティングだとカード内の「セットを追加」に被る） */}
+        <Button
+          variant={draft.entries.length === 0 ? "outline" : "default"}
+          size="lg"
+          className={draft.entries.length === 0 ? "w-full border-dashed" : "w-full"}
+          onClick={() => setPickerOpen(true)}
+        >
+          <Plus className="size-4" data-icon="inline-start" />
+          種目を追加
+        </Button>
 
         <textarea
           value={draft.note}
@@ -201,17 +214,6 @@ export function WorkoutRecorder() {
           rows={3}
           className="w-full resize-none rounded-2xl border border-border bg-card p-4 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
         />
-      </div>
-
-      <div className="pointer-events-none fixed inset-x-0 bottom-[88px] z-30 mx-auto max-w-md px-4">
-        <Button
-          size="lg"
-          className="pointer-events-auto w-full shadow-[0_18px_40px_rgba(0,0,0,0.25)]"
-          onClick={() => setPickerOpen(true)}
-        >
-          <Plus className="size-4" data-icon="inline-start" />
-          種目を追加
-        </Button>
       </div>
 
       <ExercisePickerSheet

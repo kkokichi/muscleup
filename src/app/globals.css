@@ -146,6 +146,11 @@
   padding-top: calc(env(safe-area-inset-top) + 1.5rem);
 }
 
+/* 本文の下端。固定タブバー（＋ホームインジケータ）に隠れないだけの余白を確保する */
+@utility pb-content {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 8rem);
+}
+
 /* マスコット祝福時の紙吹雪（framer-motionに依存しないCSSアニメーション） */
 @keyframes mascot-confetti-fall {
   from {

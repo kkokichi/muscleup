@@ -38,8 +38,10 @@ export default function PrivacyPage() {
               既定では<b>お使いの端末内のみ</b>に保存されます。
             </li>
             <li>
-              <b>Googleアカウントでのログイン（任意）</b>を行った場合のみ、
-              記録がクラウド（Google Firebase / Firestore）に同期・保存されます。
+              <b>メールアドレスとパスワードでのログイン（任意）</b>を行った場合のみ、
+              メールアドレスと記録がクラウド（Google Firebase / Firestore）に
+              同期・保存されます。パスワードは Firebase Authentication が管理し、
+              本アプリが保持することはありません。
             </li>
             <li>
               <b>位置情報（任意）</b>は、ジムのチェックイン機能を使う場合にのみ

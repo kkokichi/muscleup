@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { WorkoutDraft } from "@/types";
-import { hasKnownGoogleSession, isFirebaseConfigured } from "@/lib/firebase";
+import { hasKnownAuthSession, isFirebaseConfigured } from "@/lib/firebase";
 import { getRepos } from "@/repositories";
 import { rebuildRecordsFromLogs } from "@/services/recordService";
 import { draftToLog } from "@/services/workoutService";
@@ -59,7 +59,7 @@ export function useAutoSaveWorkout(draft: WorkoutDraft | null): AutoSaveState {
       if (latestSequence.current === sequence) {
         setLastSavedAt(new Date());
         setStatus(
-          isFirebaseConfigured() && hasKnownGoogleSession() ? "saved" : "offline",
+          isFirebaseConfigured() && hasKnownAuthSession() ? "saved" : "offline",
         );
       }
       return true;
@@ -90,7 +90,7 @@ export function useAutoSaveWorkout(draft: WorkoutDraft | null): AutoSaveState {
         if (latestSequence.current !== sequence) return;
         setLastSavedAt(new Date());
         setStatus(
-          isFirebaseConfigured() && hasKnownGoogleSession() ? "saved" : "offline",
+          isFirebaseConfigured() && hasKnownAuthSession() ? "saved" : "offline",
         );
       } catch (error) {
         console.error("ワークアウトの自動保存に失敗", error);

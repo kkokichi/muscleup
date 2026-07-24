@@ -1,15 +1,14 @@
-import { Capacitor } from "@capacitor/core";
-import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import {
-  GoogleAuthProvider,
+  EmailAuthProvider,
+  createUserWithEmailAndPassword,
   getAuth,
-  getRedirectResult,
+  linkWithCredential,
   onAuthStateChanged,
-  signInWithCredential,
-  signInWithPopup,
-  signInWithRedirect,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
   signOut,
+  updateProfile,
   type User,
 } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
@@ -30,21 +29,25 @@ const DEFAULT_FIREBASE_CONFIG = {
   appId: "1:411709345538:web:5ac3850bdbac106af53c1b",
 } as const;
 
-const GOOGLE_SESSION_KEY = "muscleup:v1:googleSession";
+const AUTH_SESSION_KEY = "muscleup:v1:authSession";
+/** v1.0.1以前（Googleログイン時代）のキー。既存ユーザーの継続用に読み取りだけ残す */
+const LEGACY_GOOGLE_SESSION_KEY = "muscleup:v1:googleSession";
 
-function rememberGoogleSession(): void {
+function rememberAuthSession(): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(GOOGLE_SESSION_KEY, "true");
+  window.localStorage.setItem(AUTH_SESSION_KEY, "true");
 }
 
-export function clearKnownGoogleSession(): void {
+export function clearKnownAuthSession(): void {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(GOOGLE_SESSION_KEY);
+  window.localStorage.removeItem(AUTH_SESSION_KEY);
+  window.localStorage.removeItem(LEGACY_GOOGLE_SESSION_KEY);
 }
 
-export function hasKnownGoogleSession(): boolean {
+export function hasKnownAuthSession(): boolean {
   if (typeof window === "undefined") return false;
-  if (window.localStorage.getItem(GOOGLE_SESSION_KEY) === "true") return true;
+  if (window.localStorage.getItem(AUTH_SESSION_KEY) === "true") return true;
+  if (window.localStorage.getItem(LEGACY_GOOGLE_SESSION_KEY) === "true") return true;
 
   const { apiKey } = getFirebaseConfig();
   return Object.keys(window.localStorage).some((key) =>
@@ -104,7 +107,7 @@ export function isNotSignedInError(e: unknown): boolean {
 
 /**
  * ログイン中ユーザーのUIDを返す。未ログインなら NotSignedInError を投げる。
- * （匿名認証は廃止。コミュニティ・アカウント保存はGoogleログイン前提）
+ * （匿名認証は廃止。コミュニティ・アカウント保存はメールアドレスログイン前提）
  */
 export async function getUid(): Promise<string> {
   const auth = getAuth(getFirebaseApp());
@@ -114,7 +117,10 @@ export async function getUid(): Promise<string> {
   throw new NotSignedInError();
 }
 
-// --- Google ログイン（アカウント別データ保存用） ---
+// --- メールアドレス + パスワード ログイン（アカウント別データ保存用） ---
+
+/** Firebase Authentication のパスワード最小文字数（サーバー側の制約） */
+export const PASSWORD_MIN_LENGTH = 6;
 
 /** 最初の認証状態が確定するのを待つ（観測のみ） */
 export function onAuthReady(): Promise<User | null> {
@@ -127,7 +133,7 @@ export function onAuthReady(): Promise<User | null> {
   });
 }
 
-/** ログイン中のGoogleユーザー（匿名は除外）。未ログインなら null */
+/** ログイン中のユーザー（匿名は除外）。未ログインなら null */
 export async function getSignedInUser(): Promise<User | null> {
   const user = await onAuthReady();
   return user && !user.isAnonymous ? user : null;
@@ -137,64 +143,73 @@ export function subscribeAuth(cb: (user: User | null) => void): () => void {
   return onAuthStateChanged(getAuth(getFirebaseApp()), cb);
 }
 
-export async function signInWithGoogle(): Promise<User> {
-  if (Capacitor.isNativePlatform()) {
-    const result = await FirebaseAuthentication.signInWithGoogle({
-      skipNativeAuth: true,
-    });
-    const idToken = result.credential?.idToken ?? null;
-    const accessToken = result.credential?.accessToken ?? null;
-
-    if (!idToken && !accessToken) {
-      throw Object.assign(
-        new Error("Google認証情報を取得できませんでした。"),
-        { code: "auth/invalid-credential" },
-      );
-    }
-
-    const credential = GoogleAuthProvider.credential(idToken, accessToken);
-    const userCredential = await signInWithCredential(
-      getAuth(getFirebaseApp()),
-      credential,
-    );
-    rememberGoogleSession();
-    return userCredential.user;
-  }
-
-  const provider = new GoogleAuthProvider();
-  const credential = await signInWithPopup(getAuth(getFirebaseApp()), provider);
-  rememberGoogleSession();
+/** メールアドレス + パスワードでログインする */
+export async function signInWithEmail(
+  email: string,
+  password: string,
+): Promise<User> {
+  const credential = await signInWithEmailAndPassword(
+    getAuth(getFirebaseApp()),
+    email.trim(),
+    password,
+  );
+  rememberAuthSession();
   return credential.user;
 }
 
-/** ポップアップが使えない環境（iOS Safari等）向けのリダイレクト方式 */
-export async function signInWithGoogleRedirect(): Promise<void> {
-  await signInWithRedirect(getAuth(getFirebaseApp()), new GoogleAuthProvider());
+/** メールアドレス + パスワードで新規登録する。表示名は任意 */
+export async function signUpWithEmail(
+  email: string,
+  password: string,
+  displayName?: string,
+): Promise<User> {
+  const credential = await createUserWithEmailAndPassword(
+    getAuth(getFirebaseApp()),
+    email.trim(),
+    password,
+  );
+  const name = displayName?.trim();
+  if (name) {
+    await updateProfile(credential.user, { displayName: name }).catch(
+      () => undefined,
+    );
+  }
+  rememberAuthSession();
+  return credential.user;
 }
 
-/** リダイレクト方式のログインから戻ってきた場合、そのユーザーを返す */
-export async function getGoogleRedirectResult(): Promise<User | null> {
-  const result = await getRedirectResult(getAuth(getFirebaseApp()));
-  if (result?.user) rememberGoogleSession();
-  return result?.user ?? null;
+/** パスワード再設定メールを送る */
+export async function sendPasswordReset(email: string): Promise<void> {
+  await sendPasswordResetEmail(getAuth(getFirebaseApp()), email.trim());
+}
+
+/** ログイン中ユーザーが「パスワード」の認証方法を持っているか */
+export function hasPasswordProvider(user: User): boolean {
+  return user.providerData.some((p) => p.providerId === "password");
+}
+
+/**
+ * ログイン中のアカウント（旧Googleログインのセッション等）に、
+ * メールアドレス+パスワードの認証方法を追加する。
+ * UID は変わらないため、Firestore の記録はそのまま引き継がれる。
+ */
+export async function linkPasswordToCurrentUser(password: string): Promise<User> {
+  const user = getAuth(getFirebaseApp()).currentUser;
+  if (!user) throw new NotSignedInError();
+  if (!user.email) {
+    throw Object.assign(new Error("メールアドレスが取得できませんでした。"), {
+      code: "auth/missing-email",
+    });
+  }
+  const credential = EmailAuthProvider.credential(user.email, password);
+  const result = await linkWithCredential(user, credential);
+  rememberAuthSession();
+  return result.user;
 }
 
 export async function signOutUser(): Promise<void> {
-  if (Capacitor.isNativePlatform()) {
-    await FirebaseAuthentication.signOut().catch(() => undefined);
-  }
   await signOut(getAuth(getFirebaseApp()));
-  clearKnownGoogleSession();
-}
-
-/** ポップアップ失敗時にリダイレクトへフォールバックすべきエラーか */
-export function isPopupUnsupportedError(e: unknown): boolean {
-  const code = (e as { code?: string })?.code ?? "";
-  return (
-    code === "auth/popup-blocked" ||
-    code === "auth/operation-not-supported-in-this-environment" ||
-    code === "auth/popup-closed-by-user"
-  );
+  clearKnownAuthSession();
 }
 
 export function authErrorCode(e: unknown): string {

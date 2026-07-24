@@ -1,7 +1,7 @@
 import {
-  clearKnownGoogleSession,
+  clearKnownAuthSession,
   getSignedInUser,
-  hasKnownGoogleSession,
+  hasKnownAuthSession,
   isFirebaseConfigured,
   isNotSignedInError,
 } from "@/lib/firebase";
@@ -32,9 +32,9 @@ let reposPromise: Promise<Repositories> | null = null;
  * Repository Factory（ハイブリッド構成）。
  *
  * - 未ログイン時: Firebaseを待たず、端末ローカルを即返す。
- * - 共有データ（チェックイン・アドバイス）: Googleログイン中は Firestore。
+ * - 共有データ（チェックイン・アドバイス）: ログイン中は Firestore。
  * - 個人データ（記録・自己ベスト・プロフィール・テンプレート・カスタム種目）:
- *   Googleログイン中はアカウント（Firestore users/{uid}）に保存。
+ *   ログイン中はアカウント（Firestore users/{uid}）に保存。
  *   未ログイン時は端末ローカル（localStorage）。
  *   ※体組成・進捗写真・実績・リマインダーは端末ローカルのまま。
  *
@@ -50,7 +50,7 @@ export function getRepos(): Promise<Repositories> {
 async function resolve(): Promise<Repositories> {
   const repos: Repositories = { ...localRepositories };
 
-  if (!isFirebaseConfigured() || !hasKnownGoogleSession()) {
+  if (!isFirebaseConfigured() || !hasKnownAuthSession()) {
     return repos;
   }
 
@@ -70,7 +70,7 @@ async function resolve(): Promise<Repositories> {
     repos.advice = firestore.advice;
   } catch (error) {
     if (isNotSignedInError(error)) {
-      clearKnownGoogleSession();
+      clearKnownAuthSession();
       return repos;
     }
     console.error("Firestore初期化に失敗。ローカルで継続します", error);

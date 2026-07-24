@@ -15,7 +15,7 @@ export function LoginPrompt({ message }: { message: string }) {
           href="/settings"
           className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform active:scale-95"
         >
-          Googleでログイン
+          ログイン / 新規登録
         </Link>
       </CardContent>
     </Card>

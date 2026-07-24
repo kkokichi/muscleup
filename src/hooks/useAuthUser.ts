@@ -10,7 +10,7 @@ export interface AuthUser {
   photoURL: string | null;
 }
 
-/** ログイン中のGoogleユーザーを監視する（匿名は未ログイン扱い） */
+/** ログイン中のユーザーを監視する（匿名は未ログイン扱い） */
 export function useAuthUser() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
