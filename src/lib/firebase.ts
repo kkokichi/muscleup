@@ -11,7 +11,6 @@ import {
   updateProfile,
   type User,
 } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
 
 /**
  * Firebase 接続設定。
@@ -80,14 +79,15 @@ export function isFirebaseConfigured(): boolean {
   return Boolean(config.apiKey && config.projectId);
 }
 
-function getFirebaseApp(): FirebaseApp {
+/**
+ * Firebase App の初期化。Firestore SDK（重い WebChannel 含む・約700KB）は
+ * ここから import しない。初期バンドルに firestore が混ざるのを防ぐため、
+ * getDb() は lib/firestoreDb.ts に分離し、Firestore実装（動的import）からのみ読む。
+ */
+export function getFirebaseApp(): FirebaseApp {
   const existing = getApps()[0];
   if (existing) return existing;
   return initializeApp(getFirebaseConfig());
-}
-
-export function getDb(): Firestore {
-  return getFirestore(getFirebaseApp());
 }
 
 /** ログインが必要な操作でユーザー未ログインの時に投げるエラー */

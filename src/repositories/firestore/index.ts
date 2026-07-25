@@ -21,7 +21,8 @@ import type {
   WorkoutTemplate,
 } from "@/types";
 import { SEED_EXERCISES } from "@/data/exercises";
-import { getDb, getUid } from "@/lib/firebase";
+import { getUid } from "@/lib/firebase";
+import { getDb } from "@/lib/firestoreDb";
 import type { Repositories } from "../interfaces";
 
 /**
