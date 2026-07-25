@@ -1,9 +1,9 @@
 import {
   clearKnownAuthSession,
   getSignedInUser,
-  hasKnownAuthSession,
   isFirebaseConfigured,
   isNotSignedInError,
+  rememberAuthSession,
 } from "@/lib/firebase";
 import type { Repositories } from "./interfaces";
 import { localWorkoutLogRepository } from "./local/localWorkoutLogRepository";
@@ -50,14 +50,29 @@ export function getRepos(): Promise<Repositories> {
 async function resolve(): Promise<Repositories> {
   const repos: Repositories = { ...localRepositories };
 
-  if (!isFirebaseConfigured() || !hasKnownAuthSession()) {
+  if (!isFirebaseConfigured()) return repos;
+
+  // ログイン判定は「端末に残した localStorage フラグ」ではなく、Firebase の
+  // 実セッションで行う。フラグは消えていてもセッション（IndexedDB 側の
+  // firebase:authUser）が残っていることがあり（旧Googleログイン・iOS/Safari
+  // による localStorage の失効など）、フラグだけで未ログインと決めつけると、
+  // ログイン中なのにローカル（空）を返して履歴が反映されない。
+  // ※ getSignedInUser は firebase/auth のみを使う。重い Firestore SDK は
+  //   ユーザー確定後の動的 import まで読み込まれないため初回表示は軽いまま。
+  let user;
+  try {
+    user = await getSignedInUser();
+  } catch (error) {
+    console.error("認証状態の確認に失敗。ローカルで継続します", error);
     return repos;
   }
+  if (!user) return repos;
+
+  // 実セッションを確認できたので、次回以降の同期表示（自動保存の保存先表示など）
+  // のためにフラグを最新化しておく。
+  rememberAuthSession();
 
   try {
-    const user = await getSignedInUser();
-    if (!user) return repos;
-
     const mod = await import("./firestore");
     const firestore = mod.createFirestoreRepositories();
 

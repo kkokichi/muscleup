@@ -32,7 +32,7 @@ const AUTH_SESSION_KEY = "muscleup:v1:authSession";
 /** v1.0.1以前（Googleログイン時代）のキー。既存ユーザーの継続用に読み取りだけ残す */
 const LEGACY_GOOGLE_SESSION_KEY = "muscleup:v1:googleSession";
 
-function rememberAuthSession(): void {
+export function rememberAuthSession(): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(AUTH_SESSION_KEY, "true");
 }
