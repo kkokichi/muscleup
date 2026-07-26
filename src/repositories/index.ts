@@ -39,12 +39,22 @@ let reposPromise: Promise<Repositories> | null = null;
  *   ※体組成・進捗写真・実績・リマインダーは端末ローカルのまま。
  *
  * 呼び出し側はデータソースを一切意識しない。
- * 認証状態が変わったら AccountSection が window.location.reload() を呼び、
- * この Factory を再評価させる（reposPromise が作り直される）。
+ * 認証状態が変わったら（ログイン/ログアウト）AccountSection が refreshRepos() を
+ * 呼び、この Factory を再評価させる（reposPromise が作り直される）。以前は
+ * window.location.reload() で再評価していたが、iOS の standalone PWA では
+ * フルリロードで画面が真っ白になることがあるため、リロードせず再取得する。
  */
 export function getRepos(): Promise<Repositories> {
   reposPromise ??= resolve();
   return reposPromise;
+}
+
+/**
+ * 認証状態が変わったときに呼ぶ。次回 getRepos() で Factory を再解決させる。
+ * 併せて画面側（DataRefreshBoundary）を再マウントして各データフックを再取得させる。
+ */
+export function refreshRepos(): void {
+  reposPromise = null;
 }
 
 async function resolve(): Promise<Repositories> {

@@ -16,6 +16,8 @@ import {
   signUpWithEmail,
 } from "@/lib/firebase";
 import { migrateLocalToCloud } from "@/repositories/migration";
+import { refreshRepos } from "@/repositories";
+import { useDataRefreshStore } from "@/stores/dataRefreshStore";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +61,7 @@ function messageForCode(code: string): string {
  */
 export function AccountSection() {
   const { user, loading } = useAuthUser();
+  const refreshData = useDataRefreshStore((s) => s.bump);
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -86,8 +89,10 @@ export function AccountSection() {
   const finishLogin = async () => {
     // 端末ローカルのデータをアカウントへ移行（クラウドが空の場合のみ）
     await migrateLocalToCloud();
-    // Repository Factory を再評価するためリロード
-    window.location.reload();
+    // Repository Factory を再評価し、画面を再マウントしてデータを取り直す。
+    // （window.location.reload() は standalone PWA で画面が真っ白になるため使わない）
+    refreshRepos();
+    refreshData();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -151,7 +156,9 @@ export function AccountSection() {
     setBusy(true);
     try {
       await signOutUser();
-      window.location.reload();
+      // リロードせずに Factory を再評価＋画面再マウントでローカルデータへ戻す
+      refreshRepos();
+      refreshData();
     } catch (err) {
       console.error(err);
       setBusy(false);
