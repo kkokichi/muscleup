@@ -70,6 +70,49 @@ export interface PublicProfile {
   updatedAt: string;
 }
 
+export type FriendRequestStatus = "pending" | "accepted" | "declined";
+
+/** フレンド申請（相互承認型）。トップレベル friendRequests に保存 */
+export interface FriendRequest {
+  id: string;
+  fromUserId: string;
+  /** 送信者の表示名（非正規化・通知/一覧表示用） */
+  fromName: string;
+  toUserId: string;
+  /** 受信者の表示名（非正規化・送信済み一覧の表示用） */
+  toName: string;
+  status: FriendRequestStatus;
+  /** ISO 8601 */
+  createdAt: string;
+}
+
+/**
+ * フレンド関係。承認済みの2者を1件で表す。
+ * ドキュメントID(pairId) = 2つのUIDをソートして "_" で連結したもの。
+ */
+export interface Friend {
+  /** pairId（ソート済みUIDの連結） */
+  id: string;
+  userIds: string[];
+  sourceRequestId: string;
+  /** ISO 8601 */
+  createdAt: string;
+}
+
+/** 自分から見た相手との関係 */
+export type FriendRelationState =
+  | "self"
+  | "none"
+  | "pending_sent"
+  | "pending_received"
+  | "friends";
+
+export interface FriendRelation {
+  state: FriendRelationState;
+  /** pending_received のとき、承認に使う申請ID */
+  requestId?: string;
+}
+
 /** 種目へのアドバイス・コツの共有投稿 */
 export interface ExerciseAdvice {
   id: string;

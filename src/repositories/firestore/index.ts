@@ -21,6 +21,8 @@ import type {
   Exercise,
   ExerciseAdvice,
   ExerciseRecord,
+  Friend,
+  FriendRequest,
   PublicProfile,
   UserProfile,
   WorkoutLog,
@@ -30,6 +32,11 @@ import { SEED_EXERCISES } from "@/data/exercises";
 import { getUid } from "@/lib/firebase";
 import { getDb } from "@/lib/firestoreDb";
 import type { Repositories } from "../interfaces";
+
+/** 2つのUIDを並べ替えて連結した、フレンド関係の一意なドキュメントID */
+function sortedPairId(a: string, b: string): string {
+  return a < b ? `${a}_${b}` : `${b}_${a}`;
+}
 
 /**
  * Firestore 実装（docs/05-database-design.md のコレクション設計に対応）。
@@ -256,6 +263,90 @@ export function createFirestoreRepositories(): Repositories {
           ),
         );
         return snap.docs.map((d) => d.data() as PublicProfile);
+      },
+
+      async sendFriendRequest(request) {
+        await setDoc(doc(getDb(), "friendRequests", request.id), request);
+      },
+      async getReceivedRequests(uid) {
+        // 複合インデックスを避けるため、等値1つで取得し status はクライアント側で絞る
+        const snap = await getDocs(
+          query(collection(getDb(), "friendRequests"), where("toUserId", "==", uid)),
+        );
+        return snap.docs
+          .map((d) => d.data() as FriendRequest)
+          .filter((r) => r.status === "pending")
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      },
+      async getSentRequests(uid) {
+        const snap = await getDocs(
+          query(collection(getDb(), "friendRequests"), where("fromUserId", "==", uid)),
+        );
+        return snap.docs
+          .map((d) => d.data() as FriendRequest)
+          .filter((r) => r.status === "pending")
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      },
+      async acceptFriendRequest(requestId, fromUserId, toUserId) {
+        // 先に申請を accepted にしてから friends を作る
+        // （friends 作成ルールが「参照する申請が accepted か」を get() で検証するため）
+        await updateDoc(doc(getDb(), "friendRequests", requestId), {
+          status: "accepted",
+        });
+        const pairId = sortedPairId(fromUserId, toUserId);
+        await setDoc(doc(getDb(), "friends", pairId), {
+          id: pairId,
+          userIds: [fromUserId, toUserId].sort(),
+          sourceRequestId: requestId,
+          createdAt: new Date().toISOString(),
+        });
+      },
+      async declineFriendRequest(requestId) {
+        await updateDoc(doc(getDb(), "friendRequests", requestId), {
+          status: "declined",
+        });
+      },
+      async cancelFriendRequest(requestId) {
+        await deleteDoc(doc(getDb(), "friendRequests", requestId));
+      },
+      async getFriends(uid) {
+        const snap = await getDocs(
+          query(
+            collection(getDb(), "friends"),
+            where("userIds", "array-contains", uid),
+          ),
+        );
+        return snap.docs.map((d) => d.data() as Friend);
+      },
+      async getRelationship(myUid, otherUid) {
+        if (myUid === otherUid) return { state: "self" };
+        const pairId = sortedPairId(myUid, otherUid);
+        const friendSnap = await getDoc(doc(getDb(), "friends", pairId));
+        if (friendSnap.exists()) return { state: "friends" };
+
+        const [sentSnap, receivedSnap] = await Promise.all([
+          getDocs(
+            query(
+              collection(getDb(), "friendRequests"),
+              where("fromUserId", "==", myUid),
+            ),
+          ),
+          getDocs(
+            query(
+              collection(getDb(), "friendRequests"),
+              where("toUserId", "==", myUid),
+            ),
+          ),
+        ]);
+        const sent = sentSnap.docs
+          .map((d) => d.data() as FriendRequest)
+          .find((r) => r.toUserId === otherUid && r.status === "pending");
+        if (sent) return { state: "pending_sent" };
+        const received = receivedSnap.docs
+          .map((d) => d.data() as FriendRequest)
+          .find((r) => r.fromUserId === otherUid && r.status === "pending");
+        if (received) return { state: "pending_received", requestId: received.id };
+        return { state: "none" };
       },
     },
   };

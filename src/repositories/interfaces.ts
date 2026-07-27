@@ -5,6 +5,9 @@ import type {
   Exercise,
   ExerciseAdvice,
   ExerciseRecord,
+  Friend,
+  FriendRelation,
+  FriendRequest,
   MuscleCategoryId,
   PublicProfile,
   UserProfile,
@@ -83,12 +86,34 @@ export interface AdviceRepository {
   updateLikes(id: string, delta: number): Promise<void>;
 }
 
-/** 公開プロフィール（フレンド検索・表示の共有データ） */
+/** 公開プロフィール＋フレンド関係（検索・申請・承認の共有データ） */
 export interface SocialRepository {
   /** 指定ユーザーの公開プロフィール（無ければ null） */
   getPublicProfile(uid: string): Promise<PublicProfile | null>;
   /** 表示名の前方一致で公開プロフィールを検索する */
   searchProfilesByName(prefix: string, limitN?: number): Promise<PublicProfile[]>;
+
+  // --- フレンド関係 ---
+  /** フレンド申請を送る */
+  sendFriendRequest(request: FriendRequest): Promise<void>;
+  /** 自分宛の保留中の申請 */
+  getReceivedRequests(uid: string): Promise<FriendRequest[]>;
+  /** 自分が送った保留中の申請 */
+  getSentRequests(uid: string): Promise<FriendRequest[]>;
+  /** 申請を承認する（friends を作成する） */
+  acceptFriendRequest(
+    requestId: string,
+    fromUserId: string,
+    toUserId: string,
+  ): Promise<void>;
+  /** 申請を拒否する */
+  declineFriendRequest(requestId: string): Promise<void>;
+  /** 送った申請を取り消す */
+  cancelFriendRequest(requestId: string): Promise<void>;
+  /** 自分のフレンド一覧 */
+  getFriends(uid: string): Promise<Friend[]>;
+  /** 自分と相手の関係 */
+  getRelationship(myUid: string, otherUid: string): Promise<FriendRelation>;
 }
 
 export interface Repositories {
