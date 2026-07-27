@@ -115,7 +115,12 @@ export function createFirestoreRepositories(): Repositories {
           xp: 0,
           createdAt: new Date().toISOString(),
         };
-        await setDoc(ref, fresh);
+        // 初期プロフィールの作成は待たない（fire-and-forget）。
+        // オフライン起動時、Firestore の書き込み Promise は接続が戻るまで
+        // 解決しないため、await するとホームの読み込みが固まってしまう。
+        void setDoc(ref, fresh).catch((e) =>
+          console.error("初期プロフィールの保存に失敗", e),
+        );
         return fresh;
       },
       async save(profile) {
