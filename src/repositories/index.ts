@@ -13,6 +13,7 @@ import { localUserProfileRepository } from "./local/localUserProfileRepository";
 import { localCheckinRepository } from "./local/localCheckinRepository";
 import { localAdviceRepository } from "./local/localAdviceRepository";
 import { localWorkoutTemplateRepository } from "./local/localWorkoutTemplateRepository";
+import { localSocialRepository } from "./local/localSocialRepository";
 
 export type * from "./interfaces";
 
@@ -24,6 +25,7 @@ const localRepositories: Repositories = {
   workoutTemplates: localWorkoutTemplateRepository,
   checkins: localCheckinRepository,
   advice: localAdviceRepository,
+  social: localSocialRepository,
 };
 
 let reposPromise: Promise<Repositories> | null = null;
@@ -93,6 +95,7 @@ async function resolve(): Promise<Repositories> {
     repos.exercises = firestore.exercises;
     repos.checkins = firestore.checkins;
     repos.advice = firestore.advice;
+    repos.social = firestore.social;
   } catch (error) {
     if (isNotSignedInError(error)) {
       clearKnownAuthSession();

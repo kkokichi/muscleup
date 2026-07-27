@@ -6,6 +6,7 @@ import type {
   ExerciseAdvice,
   ExerciseRecord,
   MuscleCategoryId,
+  PublicProfile,
   UserProfile,
   WorkoutLog,
   WorkoutTemplate,
@@ -82,6 +83,14 @@ export interface AdviceRepository {
   updateLikes(id: string, delta: number): Promise<void>;
 }
 
+/** 公開プロフィール（フレンド検索・表示の共有データ） */
+export interface SocialRepository {
+  /** 指定ユーザーの公開プロフィール（無ければ null） */
+  getPublicProfile(uid: string): Promise<PublicProfile | null>;
+  /** 表示名の前方一致で公開プロフィールを検索する */
+  searchProfilesByName(prefix: string, limitN?: number): Promise<PublicProfile[]>;
+}
+
 export interface Repositories {
   workoutLogs: WorkoutLogRepository;
   exercises: ExerciseRepository;
@@ -90,4 +99,5 @@ export interface Repositories {
   workoutTemplates: WorkoutTemplateRepository;
   checkins: CheckinRepository;
   advice: AdviceRepository;
+  social: SocialRepository;
 }

@@ -20,6 +20,14 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 公開プロフィール（表示名のみの公開ミラー）: フレンド検索・表示用。
+    // 認証済みは読み取り可。書き込みは本人のみ（他人の表示名を書き換えられない）。
+    // ※ 私的データは users/{uid} 側にあり、ここには表示名しか置かない。
+    match /publicProfiles/{profileUserId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == profileUserId;
+    }
+
     // ジムチェックイン（共有）: 認証済みは全件読み取り可。
     // 作成は本人のUIDでのみ。削除・更新は投稿者本人のみ。
     match /checkins/{checkinId} {

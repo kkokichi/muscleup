@@ -58,6 +58,18 @@ export interface CheckinComment {
 /** コメント本文の最大文字数（一言応援の想定） */
 export const CHECKIN_COMMENT_MAX_LENGTH = 140;
 
+/**
+ * 公開プロフィール（表示名のみの公開ミラー）。
+ * users/{uid} には記録などの私的データがあり公開できないため、フレンド検索・
+ * 表示に必要な「表示名だけ」を publicProfiles/{uid} に切り出して公開する。
+ */
+export interface PublicProfile {
+  uid: string;
+  displayName: string;
+  /** ISO 8601 */
+  updatedAt: string;
+}
+
 /** 種目へのアドバイス・コツの共有投稿 */
 export interface ExerciseAdvice {
   id: string;

@@ -2,12 +2,15 @@ import {
   collection,
   deleteDoc,
   doc,
+  endAt,
   getDoc,
   getDocs,
   increment,
+  limit,
   orderBy,
   query,
   setDoc,
+  startAt,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -18,6 +21,7 @@ import type {
   Exercise,
   ExerciseAdvice,
   ExerciseRecord,
+  PublicProfile,
   UserProfile,
   WorkoutLog,
   WorkoutTemplate,
@@ -125,9 +129,15 @@ export function createFirestoreRepositories(): Repositories {
         return fresh;
       },
       async save(profile) {
-        await setDoc(doc(getDb(), "users", await getUid()), profile, {
-          merge: true,
-        });
+        const uid = await getUid();
+        await setDoc(doc(getDb(), "users", uid), profile, { merge: true });
+        // 表示名だけは公開ミラー（publicProfiles）にも反映する。
+        // フレンド検索・表示は users/{uid}（私的）を読めないため、ここで同期する。
+        await setDoc(
+          doc(getDb(), "publicProfiles", uid),
+          { uid, displayName: profile.displayName, updatedAt: new Date().toISOString() },
+          { merge: true },
+        ).catch((e) => console.error("公開プロフィールの同期に失敗", e));
       },
     },
 
@@ -223,6 +233,29 @@ export function createFirestoreRepositories(): Repositories {
         await updateDoc(doc(getDb(), "exerciseAdvice", id), {
           likeCount: increment(delta),
         });
+      },
+    },
+
+    social: {
+      async getPublicProfile(uid) {
+        const snap = await getDoc(doc(getDb(), "publicProfiles", uid));
+        return snap.exists() ? (snap.data() as PublicProfile) : null;
+      },
+      async searchProfilesByName(prefix, limitN = 20) {
+        const term = prefix.trim();
+        if (!term) return [];
+        // 表示名の前方一致（Firestore の範囲クエリ）。末尾に高コードポイントの
+        // 番兵(\uf8ff)を付けて前方一致の範囲にする定番手法。
+        const snap = await getDocs(
+          query(
+            collection(getDb(), "publicProfiles"),
+            orderBy("displayName"),
+            startAt(term),
+            endAt(term + "\uf8ff"),
+            limit(limitN),
+          ),
+        );
+        return snap.docs.map((d) => d.data() as PublicProfile);
       },
     },
   };
