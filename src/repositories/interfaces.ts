@@ -1,5 +1,6 @@
 import type {
   Checkin,
+  CheckinComment,
   CheckinReaction,
   Exercise,
   ExerciseAdvice,
@@ -65,6 +66,10 @@ export interface CheckinRepository {
     userId: string,
     reaction: Omit<CheckinReaction, "userId"> | null,
   ): Promise<void>;
+  /** チェックインのコメント一覧（新しい順） */
+  getComments(checkinId: string): Promise<CheckinComment[]>;
+  addComment(checkinId: string, comment: CheckinComment): Promise<void>;
+  deleteComment(checkinId: string, commentId: string): Promise<void>;
 }
 
 /** 種目アドバイス（共有） */

@@ -1,9 +1,10 @@
-import type { Checkin, CheckinReaction } from "@/types";
+import type { Checkin, CheckinComment, CheckinReaction } from "@/types";
 import type { CheckinRepository } from "../interfaces";
 import { readStorage, writeStorage } from "./storage";
 
 const KEY = "checkins";
 const REACTIONS_KEY = "checkinReactions";
+const COMMENTS_KEY = "checkinComments";
 
 function load(): Checkin[] {
   return readStorage<Checkin[]>(KEY, []);
@@ -14,6 +15,13 @@ type ReactionMap = Record<string, CheckinReaction[]>;
 
 function loadReactions(): ReactionMap {
   return readStorage<ReactionMap>(REACTIONS_KEY, {});
+}
+
+/** checkinId ごとのコメント配列 */
+type CommentMap = Record<string, CheckinComment[]>;
+
+function loadComments(): CommentMap {
+  return readStorage<CommentMap>(COMMENTS_KEY, {});
 }
 
 export const localCheckinRepository: CheckinRepository = {
@@ -32,11 +40,16 @@ export const localCheckinRepository: CheckinRepository = {
       KEY,
       load().filter((c) => c.id !== id),
     );
-    // 紐づくリアクションも掃除する
+    // 紐づくリアクション・コメントも掃除する
     const map = loadReactions();
     if (map[id]) {
       delete map[id];
       writeStorage(REACTIONS_KEY, map);
+    }
+    const comments = loadComments();
+    if (comments[id]) {
+      delete comments[id];
+      writeStorage(COMMENTS_KEY, comments);
     }
   },
 
@@ -53,5 +66,23 @@ export const localCheckinRepository: CheckinRepository = {
       map[checkinId] = [...current, { ...reaction, userId }];
     }
     writeStorage(REACTIONS_KEY, map);
+  },
+
+  async getComments(checkinId) {
+    return (loadComments()[checkinId] ?? []).sort((a, b) =>
+      b.createdAt.localeCompare(a.createdAt),
+    );
+  },
+
+  async addComment(checkinId, comment) {
+    const map = loadComments();
+    map[checkinId] = [...(map[checkinId] ?? []), comment];
+    writeStorage(COMMENTS_KEY, map);
+  },
+
+  async deleteComment(checkinId, commentId) {
+    const map = loadComments();
+    map[checkinId] = (map[checkinId] ?? []).filter((c) => c.id !== commentId);
+    writeStorage(COMMENTS_KEY, map);
   },
 };

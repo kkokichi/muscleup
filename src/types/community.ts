@@ -40,6 +40,24 @@ export interface CheckinReaction {
   createdAt: string;
 }
 
+/**
+ * チェックインへの応援コメント。
+ * サブコレクション checkins/{checkinId}/comments/{commentId} に保存する。
+ */
+export interface CheckinComment {
+  id: string;
+  /** 投稿者のUID */
+  userId: string;
+  /** 投稿者の表示名（非正規化） */
+  authorName: string;
+  body: string;
+  /** ISO 8601 */
+  createdAt: string;
+}
+
+/** コメント本文の最大文字数（一言応援の想定） */
+export const CHECKIN_COMMENT_MAX_LENGTH = 140;
+
 /** 種目へのアドバイス・コツの共有投稿 */
 export interface ExerciseAdvice {
   id: string;

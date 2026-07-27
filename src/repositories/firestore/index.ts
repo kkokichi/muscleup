@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import type {
   Checkin,
+  CheckinComment,
   CheckinReaction,
   Exercise,
   ExerciseAdvice,
@@ -177,6 +178,26 @@ export function createFirestoreRepositories(): Repositories {
           return;
         }
         await setDoc(ref, { ...reaction, userId });
+      },
+      async getComments(checkinId) {
+        const snap = await getDocs(
+          query(
+            collection(getDb(), "checkins", checkinId, "comments"),
+            orderBy("createdAt", "desc"),
+          ),
+        );
+        return snap.docs.map((d) => d.data() as CheckinComment);
+      },
+      async addComment(checkinId, comment) {
+        await setDoc(
+          doc(getDb(), "checkins", checkinId, "comments", comment.id),
+          comment,
+        );
+      },
+      async deleteComment(checkinId, commentId) {
+        await deleteDoc(
+          doc(getDb(), "checkins", checkinId, "comments", commentId),
+        );
       },
     },
 

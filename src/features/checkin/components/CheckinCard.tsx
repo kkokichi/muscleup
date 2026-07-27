@@ -1,11 +1,13 @@
 "use client";
 
-import { MapPin } from "lucide-react";
+import { useState } from "react";
+import { MapPin, MessageCircle } from "lucide-react";
 import type { Checkin } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { formatDateShort } from "@/utils/date";
 import { useCheckinReactions } from "../hooks/useCheckinReactions";
+import { CheckinComments } from "./CheckinComments";
 import {
   CHECKIN_REACTION_EMOJI,
   CHECKIN_REACTION_LABEL,
@@ -31,6 +33,7 @@ export function CheckinCard({
     currentUserId,
     currentUserName,
   });
+  const [showComments, setShowComments] = useState(false);
 
   return (
     <Card className="border-border bg-card">
@@ -75,7 +78,31 @@ export function CheckinCard({
                   </button>
                 );
               })}
+
+              <button
+                type="button"
+                onClick={() => setShowComments((v) => !v)}
+                aria-expanded={showComments}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
+                  showComments
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-secondary/40 text-muted-foreground",
+                  "active:bg-secondary",
+                )}
+              >
+                <MessageCircle className="size-3.5" />
+                コメント
+              </button>
             </div>
+
+            {showComments && (
+              <CheckinComments
+                checkinId={checkin.id}
+                currentUserId={currentUserId}
+                currentUserName={currentUserName}
+              />
+            )}
           </div>
         </div>
       </CardContent>
