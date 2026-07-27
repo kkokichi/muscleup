@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import type {
   Checkin,
+  CheckinReaction,
   Exercise,
   ExerciseAdvice,
   ExerciseRecord,
@@ -157,6 +158,20 @@ export function createFirestoreRepositories(): Repositories {
       },
       async delete(id) {
         await deleteDoc(doc(getDb(), "checkins", id));
+      },
+      async getReactions(checkinId) {
+        const snap = await getDocs(
+          collection(getDb(), "checkins", checkinId, "reactions"),
+        );
+        return snap.docs.map((d) => d.data() as CheckinReaction);
+      },
+      async setReaction(checkinId, userId, reaction) {
+        const ref = doc(getDb(), "checkins", checkinId, "reactions", userId);
+        if (reaction === null) {
+          await deleteDoc(ref);
+          return;
+        }
+        await setDoc(ref, { ...reaction, userId });
       },
     },
 

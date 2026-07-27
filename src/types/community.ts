@@ -22,6 +22,24 @@ export interface Checkin {
 
 export type CheckinDraft = Omit<Checkin, "id" | "userId" | "authorName" | "createdAt">;
 
+/** チェックインへのリアクション種別 */
+export type CheckinReactionType = "muscle" | "fire" | "good";
+
+/**
+ * チェックインへの応援リアクション。
+ * サブコレクション checkins/{checkinId}/reactions/{userId} に1人1件保存する。
+ * （ドキュメントIDが userId なので、押し直し＝上書き、取り消し＝削除で表現できる）
+ */
+export interface CheckinReaction {
+  /** リアクションした人のUID（= ドキュメントID） */
+  userId: string;
+  /** リアクションした人の表示名（通知表示用に非正規化） */
+  authorName: string;
+  type: CheckinReactionType;
+  /** ISO 8601 */
+  createdAt: string;
+}
+
 /** 種目へのアドバイス・コツの共有投稿 */
 export interface ExerciseAdvice {
   id: string;

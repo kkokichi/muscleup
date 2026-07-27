@@ -1,5 +1,6 @@
 import type {
   Checkin,
+  CheckinReaction,
   Exercise,
   ExerciseAdvice,
   ExerciseRecord,
@@ -53,6 +54,17 @@ export interface CheckinRepository {
   getAll(): Promise<Checkin[]>;
   create(checkin: Checkin): Promise<void>;
   delete(id: string): Promise<void>;
+  /** チェックインに付いたリアクション一覧 */
+  getReactions(checkinId: string): Promise<CheckinReaction[]>;
+  /**
+   * 自分のリアクションを設定する。userId をドキュメントIDに使う。
+   * reaction=null で取り消し（削除）。
+   */
+  setReaction(
+    checkinId: string,
+    userId: string,
+    reaction: Omit<CheckinReaction, "userId"> | null,
+  ): Promise<void>;
 }
 
 /** 種目アドバイス（共有） */
