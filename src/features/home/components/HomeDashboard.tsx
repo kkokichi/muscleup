@@ -17,6 +17,8 @@ import { ReminderNudge } from "./ReminderNudge";
 import { HomeQuickLinks } from "./HomeQuickLinks";
 import { VolumeSummaryCard } from "./VolumeSummaryCard";
 import { MonthlyCalendarCard } from "./MonthlyCalendarCard";
+import { CheerNotificationsCard } from "./CheerNotificationsCard";
+import { FriendRequestsCard } from "./FriendRequestsCard";
 
 const settingsAction = (
   <Link
@@ -62,6 +64,8 @@ export function HomeDashboard() {
           />
         </FadeIn>
         <ReminderNudge trainedToday={stats.trainedToday} />
+        <FriendRequestsCard />
+        <CheerNotificationsCard />
         <FadeIn delay={0.05}>
           <MuscleLastTrainedCard logs={stats.logs} exerciseById={byId} />
         </FadeIn>

@@ -46,3 +46,6 @@ next-env.d.ts
 
 # App Store 用スクリーンショット（生成物。scripts/gen-screenshots.mjs で再生成）
 /appstore-screenshots/*.png
+
+# AI-DLC ランタイム生成物（実行時の状態・監査ログ）
+aidlc-docs/

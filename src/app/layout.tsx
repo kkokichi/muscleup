@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
+import { DataRefreshBoundary } from "@/components/layout/DataRefreshBoundary";
+import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 const basePath = process.env.GITHUB_PAGES === "true" ? "/muscleup" : "";
@@ -56,7 +58,11 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeProvider>
-          <AppShell>{children}</AppShell>
+          <AppShell>
+            <AppErrorBoundary>
+              <DataRefreshBoundary>{children}</DataRefreshBoundary>
+            </AppErrorBoundary>
+          </AppShell>
         </ThemeProvider>
       </body>
     </html>

@@ -1,9 +1,15 @@
 import type {
   Checkin,
+  CheckinComment,
+  CheckinReaction,
   Exercise,
   ExerciseAdvice,
   ExerciseRecord,
+  Friend,
+  FriendRelation,
+  FriendRequest,
   MuscleCategoryId,
+  PublicProfile,
   UserProfile,
   WorkoutLog,
   WorkoutTemplate,
@@ -53,6 +59,21 @@ export interface CheckinRepository {
   getAll(): Promise<Checkin[]>;
   create(checkin: Checkin): Promise<void>;
   delete(id: string): Promise<void>;
+  /** チェックインに付いたリアクション一覧 */
+  getReactions(checkinId: string): Promise<CheckinReaction[]>;
+  /**
+   * 自分のリアクションを設定する。userId をドキュメントIDに使う。
+   * reaction=null で取り消し（削除）。
+   */
+  setReaction(
+    checkinId: string,
+    userId: string,
+    reaction: Omit<CheckinReaction, "userId"> | null,
+  ): Promise<void>;
+  /** チェックインのコメント一覧（新しい順） */
+  getComments(checkinId: string): Promise<CheckinComment[]>;
+  addComment(checkinId: string, comment: CheckinComment): Promise<void>;
+  deleteComment(checkinId: string, commentId: string): Promise<void>;
 }
 
 /** 種目アドバイス（共有） */
@@ -65,6 +86,49 @@ export interface AdviceRepository {
   updateLikes(id: string, delta: number): Promise<void>;
 }
 
+/** 公開プロフィール＋フレンド関係（検索・申請・承認の共有データ） */
+export interface SocialRepository {
+  /** 指定ユーザーの公開プロフィール（無ければ null） */
+  getPublicProfile(uid: string): Promise<PublicProfile | null>;
+  /** 表示名の前方一致で公開プロフィールを検索する */
+  searchProfilesByName(prefix: string, limitN?: number): Promise<PublicProfile[]>;
+
+  // --- フレンド関係 ---
+  /** フレンド申請を送る */
+  sendFriendRequest(request: FriendRequest): Promise<void>;
+  /** 自分宛の保留中の申請 */
+  getReceivedRequests(uid: string): Promise<FriendRequest[]>;
+  /** 自分が送った保留中の申請 */
+  getSentRequests(uid: string): Promise<FriendRequest[]>;
+  /** 申請を承認する（friends を作成する） */
+  acceptFriendRequest(
+    requestId: string,
+    fromUserId: string,
+    toUserId: string,
+  ): Promise<void>;
+  /** 申請を拒否する */
+  declineFriendRequest(requestId: string): Promise<void>;
+  /** 送った申請を取り消す */
+  cancelFriendRequest(requestId: string): Promise<void>;
+  /** 自分のフレンド一覧 */
+  getFriends(uid: string): Promise<Friend[]>;
+  /** 自分と相手の関係 */
+  getRelationship(myUid: string, otherUid: string): Promise<FriendRelation>;
+
+  // --- ブロック ---
+  /**
+   * 相手をブロックする。既存のフレンド関係は自動解除し、2者間の保留中の申請も
+   * 片付ける（自分の送信は取消、相手からの受信は拒否）。
+   */
+  blockUser(blockerUserId: string, blockedUserId: string): Promise<void>;
+  /** ブロックを解除する */
+  unblockUser(blockerUserId: string, blockedUserId: string): Promise<void>;
+  /** 自分が関与するブロック（自分がした側・された側の相手UID） */
+  getBlockedUserIds(
+    uid: string,
+  ): Promise<{ iBlocked: string[]; blockedMe: string[] }>;
+}
+
 export interface Repositories {
   workoutLogs: WorkoutLogRepository;
   exercises: ExerciseRepository;
@@ -73,4 +137,5 @@ export interface Repositories {
   workoutTemplates: WorkoutTemplateRepository;
   checkins: CheckinRepository;
   advice: AdviceRepository;
+  social: SocialRepository;
 }

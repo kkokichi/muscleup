@@ -68,14 +68,18 @@ export function CheckinComposer({
     );
   };
 
-  const canSubmit = gymName.trim().length > 0 && pos !== null && !saving;
+  // 位置情報は任意。ジム名さえあればチェックインできる。
+  // （マップ未設定や PWA で位置情報が取れない端末でも詰まないようにする）
+  const canSubmit = gymName.trim().length > 0 && !saving;
 
   const handleSubmit = async () => {
-    if (!pos || !gymName.trim()) return;
+    if (!gymName.trim()) return;
+    // 位置が取れていなければ既定座標（地図表示用のフォールバック）を使う
+    const loc = pos ?? DEFAULT_MAP_CENTER;
     setSaving(true);
     try {
       await onSubmit(
-        { gymName: gymName.trim(), lat: pos.lat, lng: pos.lng, comment: comment.trim() },
+        { gymName: gymName.trim(), lat: loc.lat, lng: loc.lng, comment: comment.trim() },
         name,
       );
       setGymName("");
@@ -123,7 +127,7 @@ export function CheckinComposer({
             {mapsOn ? (
               <>
                 <p className="text-xs text-muted-foreground">
-                  地図をタップして場所を選ぶか、現在地ボタンを押してください
+                  地図をタップ、または現在地ボタンで場所を選べます（任意）
                 </p>
                 <CheckinMapCanvas
                   checkins={[]}
@@ -135,9 +139,8 @@ export function CheckinComposer({
               </>
             ) : (
               <div className="rounded-xl bg-secondary/60 p-3 text-xs text-muted-foreground">
-                地図（Google Maps）は未設定のため、現在地の座標でチェックインします。
-                <br />
-                設定すると地図上にピンとコメントが表示されます。
+                ジム名だけでチェックインできます。「現在地を使う」で位置を付けると
+                地図に表示されます（任意）。
               </div>
             )}
 

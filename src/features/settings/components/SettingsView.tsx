@@ -11,6 +11,7 @@ import { useRestTimerStore } from "@/stores/restTimerStore";
 import { cn } from "@/lib/utils";
 import { useReminderSettings } from "../hooks/useReminderSettings";
 import { AccountSection } from "./AccountSection";
+import { BlockedUsersSection } from "./BlockedUsersSection";
 
 const REST_PRESETS = [30, 60, 90, 120, 150, 180] as const;
 
@@ -32,6 +33,7 @@ export function SettingsView() {
       <div className="space-y-4">
         <AccountSection />
         <ThemeToggle />
+        <BlockedUsersSection />
 
         <Card className="border-border bg-card">
           <CardContent className="p-4">

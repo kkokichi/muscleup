@@ -1,14 +1,19 @@
 import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import {
   EmailAuthProvider,
+  browserLocalPersistence,
   createUserWithEmailAndPassword,
   getAuth,
+  indexedDBLocalPersistence,
+  inMemoryPersistence,
+  initializeAuth,
   linkWithCredential,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  type Auth,
   type User,
 } from "firebase/auth";
 
@@ -32,7 +37,7 @@ const AUTH_SESSION_KEY = "muscleup:v1:authSession";
 /** v1.0.1以前（Googleログイン時代）のキー。既存ユーザーの継続用に読み取りだけ残す */
 const LEGACY_GOOGLE_SESSION_KEY = "muscleup:v1:googleSession";
 
-function rememberAuthSession(): void {
+export function rememberAuthSession(): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(AUTH_SESSION_KEY, "true");
 }
@@ -90,6 +95,38 @@ export function getFirebaseApp(): FirebaseApp {
   return initializeApp(getFirebaseConfig());
 }
 
+let authInstance: Auth | null = null;
+
+/**
+ * Firebase Auth を「消えにくい」永続化で初期化して返す。
+ *
+ * 既定の getAuth() は IndexedDB を最優先で使うが、iOS の WKWebView（Capacitor）
+ * や Safari(ITP) では IndexedDB が不安定で、ログイン直後にセッションを復元でき
+ * ず短時間でログアウトされることがある（履歴もローカル扱いに戻る）。そこで
+ * localStorage を最優先に、IndexedDB → メモリ の順でフォールバックする永続化を
+ * 明示して、リロードをまたいでもセッションが残るようにする。
+ *
+ * 全ての認証アクセスはこの関数を通す（getAuth を直接呼ばない）。initializeAuth
+ * は最初の getAuth より前に一度だけ呼ぶ必要があるため、ここで一元化する。
+ */
+export function getAuthInstance(): Auth {
+  if (authInstance) return authInstance;
+  const app = getFirebaseApp();
+  try {
+    authInstance = initializeAuth(app, {
+      persistence: [
+        browserLocalPersistence,
+        indexedDBLocalPersistence,
+        inMemoryPersistence,
+      ],
+    });
+  } catch {
+    // 既に初期化済み（同一アプリで2回目）などはデフォルト取得にフォールバック
+    authInstance = getAuth(app);
+  }
+  return authInstance;
+}
+
 /** ログインが必要な操作でユーザー未ログインの時に投げるエラー */
 export class NotSignedInError extends Error {
   constructor() {
@@ -110,7 +147,7 @@ export function isNotSignedInError(e: unknown): boolean {
  * （匿名認証は廃止。コミュニティ・アカウント保存はメールアドレスログイン前提）
  */
 export async function getUid(): Promise<string> {
-  const auth = getAuth(getFirebaseApp());
+  const auth = getAuthInstance();
   if (auth.currentUser) return auth.currentUser.uid;
   const user = await onAuthReady();
   if (user) return user.uid;
@@ -124,7 +161,7 @@ export const PASSWORD_MIN_LENGTH = 6;
 
 /** 最初の認証状態が確定するのを待つ（観測のみ） */
 export function onAuthReady(): Promise<User | null> {
-  const auth = getAuth(getFirebaseApp());
+  const auth = getAuthInstance();
   return new Promise((resolve) => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       unsubscribe();
@@ -140,7 +177,7 @@ export async function getSignedInUser(): Promise<User | null> {
 }
 
 export function subscribeAuth(cb: (user: User | null) => void): () => void {
-  return onAuthStateChanged(getAuth(getFirebaseApp()), cb);
+  return onAuthStateChanged(getAuthInstance(), cb);
 }
 
 /** メールアドレス + パスワードでログインする */
@@ -149,7 +186,7 @@ export async function signInWithEmail(
   password: string,
 ): Promise<User> {
   const credential = await signInWithEmailAndPassword(
-    getAuth(getFirebaseApp()),
+    getAuthInstance(),
     email.trim(),
     password,
   );
@@ -164,7 +201,7 @@ export async function signUpWithEmail(
   displayName?: string,
 ): Promise<User> {
   const credential = await createUserWithEmailAndPassword(
-    getAuth(getFirebaseApp()),
+    getAuthInstance(),
     email.trim(),
     password,
   );
@@ -180,7 +217,7 @@ export async function signUpWithEmail(
 
 /** パスワード再設定メールを送る */
 export async function sendPasswordReset(email: string): Promise<void> {
-  await sendPasswordResetEmail(getAuth(getFirebaseApp()), email.trim());
+  await sendPasswordResetEmail(getAuthInstance(), email.trim());
 }
 
 /** ログイン中ユーザーが「パスワード」の認証方法を持っているか */
@@ -194,7 +231,7 @@ export function hasPasswordProvider(user: User): boolean {
  * UID は変わらないため、Firestore の記録はそのまま引き継がれる。
  */
 export async function linkPasswordToCurrentUser(password: string): Promise<User> {
-  const user = getAuth(getFirebaseApp()).currentUser;
+  const user = getAuthInstance().currentUser;
   if (!user) throw new NotSignedInError();
   if (!user.email) {
     throw Object.assign(new Error("メールアドレスが取得できませんでした。"), {
@@ -208,7 +245,7 @@ export async function linkPasswordToCurrentUser(password: string): Promise<User>
 }
 
 export async function signOutUser(): Promise<void> {
-  await signOut(getAuth(getFirebaseApp()));
+  await signOut(getAuthInstance());
   clearKnownAuthSession();
 }
 

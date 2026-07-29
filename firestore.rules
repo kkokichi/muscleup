@@ -5,6 +5,25 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // --- ヘルパー ---
+    // 2つのUIDを並べ替えて連結した、フレンド関係の一意なID（クライアントと同じ規則）
+    function sortedPairId(a, b) {
+      return a < b ? a + '_' + b : b + '_' + a;
+    }
+    // sourceRequestId が指す申請が、指定2者間で accepted であることを検証する
+    // （friends の偽造＝相互承認なしの直接作成を防ぐ）
+    function isAcceptedRequestFor(requestId, uidA, uidB) {
+      let r = get(/databases/$(database)/documents/friendRequests/$(requestId)).data;
+      return r.status == 'accepted'
+        && ((r.fromUserId == uidA && r.toUserId == uidB)
+            || (r.fromUserId == uidB && r.toUserId == uidA));
+    }
+    // 2者間にブロック関係が無いこと（どちらの向きも）
+    function notBlockedPair(uidA, uidB) {
+      return !exists(/databases/$(database)/documents/blocks/$(uidA + '_' + uidB))
+        && !exists(/databases/$(database)/documents/blocks/$(uidB + '_' + uidA));
+    }
+
     // 個人データ: 本人のみ読み書き可
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
@@ -20,6 +39,74 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 公開プロフィール（表示名のみの公開ミラー）: フレンド検索・表示用。
+    // 認証済みは読み取り可。書き込みは本人のみ（他人の表示名を書き換えられない）。
+    // ※ 私的データは users/{uid} 側にあり、ここには表示名しか置かない。
+    match /publicProfiles/{profileUserId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == profileUserId;
+    }
+
+    // フレンド申請（相互承認型）: 送信者・受信者のみ読取。
+    // 作成は送信者本人が pending で。承認/拒否（update）は受信者のみ、
+    // pending から accepted/declined へのみ。取り消し（delete）は送信者のみ。
+    match /friendRequests/{requestId} {
+      allow read: if request.auth != null
+        && (resource.data.fromUserId == request.auth.uid
+            || resource.data.toUserId == request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.fromUserId == request.auth.uid
+        && request.resource.data.fromUserId != request.resource.data.toUserId
+        && request.resource.data.status == 'pending'
+        && notBlockedPair(request.resource.data.fromUserId,
+                          request.resource.data.toUserId);
+      allow update: if request.auth != null
+        && resource.data.toUserId == request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.status in ['accepted', 'declined']
+        && request.resource.data.fromUserId == resource.data.fromUserId
+        && request.resource.data.toUserId == resource.data.toUserId;
+      allow delete: if request.auth != null
+        && resource.data.fromUserId == request.auth.uid;
+    }
+
+    // フレンド関係: 当事者2名のみ読取・削除可。作成は「承認済みの申請が実在する」
+    // ことをルールで検証（相互承認なしの直接作成を防ぐ）。未存在(resource==null)の
+    // read を先に許可し、関係の無い相手の照会が失敗しないようにする。
+    match /friends/{pairId} {
+      allow read: if request.auth != null
+        && (resource == null || request.auth.uid in resource.data.userIds);
+      allow create: if request.auth != null
+        && request.auth.uid in request.resource.data.userIds
+        && request.resource.data.userIds.size() == 2
+        && pairId == sortedPairId(request.resource.data.userIds[0],
+                                  request.resource.data.userIds[1])
+        && isAcceptedRequestFor(request.resource.data.sourceRequestId,
+                                request.resource.data.userIds[0],
+                                request.resource.data.userIds[1]);
+      allow update: if false;
+      allow delete: if request.auth != null
+        && request.auth.uid in resource.data.userIds;
+    }
+
+    // ブロック: ドキュメントID = {blocker}_{blocked}。
+    // 作成/削除は blocker 本人のみ、読み取りは当事者2名のみ（最小権限・SECURITY-06）。
+    // 自己ブロックは禁止。更新は不可。
+    match /blocks/{blockId} {
+      allow read: if request.auth != null
+        && (resource == null
+            || resource.data.blockerUserId == request.auth.uid
+            || resource.data.blockedUserId == request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.blockerUserId == request.auth.uid
+        && request.resource.data.blockedUserId != request.auth.uid
+        && blockId == request.resource.data.blockerUserId + '_'
+                      + request.resource.data.blockedUserId;
+      allow update: if false;
+      allow delete: if request.auth != null
+        && resource.data.blockerUserId == request.auth.uid;
+    }
+
     // ジムチェックイン（共有）: 認証済みは全件読み取り可。
     // 作成は本人のUIDでのみ。削除・更新は投稿者本人のみ。
     match /checkins/{checkinId} {
@@ -29,6 +116,27 @@ service cloud.firestore {
       allow delete: if request.auth != null
         && resource.data.userId == request.auth.uid;
       allow update: if false;
+
+      // 応援リアクション: 認証済みは読み取り可。
+      // ドキュメントIDは押した本人のUIDで、自分のリアクションのみ作成/更新/削除できる。
+      match /reactions/{reactionUserId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null
+          && request.auth.uid == reactionUserId
+          && (request.method == 'delete'
+              || request.resource.data.userId == request.auth.uid);
+      }
+
+      // 応援コメント: 認証済みは読み取り可。
+      // 作成は本人のUIDでのみ。削除は投稿者本人のみ。編集は不可。
+      match /comments/{commentId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null
+          && request.resource.data.userId == request.auth.uid;
+        allow delete: if request.auth != null
+          && resource.data.userId == request.auth.uid;
+        allow update: if false;
+      }
     }
 
     // 種目アドバイス（共有）: 認証済みは読み取り可。

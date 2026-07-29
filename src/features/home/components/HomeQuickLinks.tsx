@@ -1,18 +1,19 @@
 import Link from "next/link";
-import { Award, History, Medal, Sparkles } from "lucide-react";
+import { Award, History, Medal, Sparkles, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const LINKS = [
   { href: "/achievements", label: "ベスト", icon: Award },
   { href: "/badges", label: "バッジ", icon: Medal },
   { href: "/history", label: "履歴", icon: History },
+  { href: "/friends", label: "フレンド", icon: Users },
   { href: "/massu", label: "マッスー", icon: Sparkles },
 ] as const;
 
 /** ホームから各セクションへのクイックリンク */
 export function HomeQuickLinks() {
   return (
-    <div className="grid grid-cols-4 gap-2.5">
+    <div className="grid grid-cols-5 gap-2.5">
       {LINKS.map(({ href, label, icon: Icon }) => (
         <Link key={href} href={href} className="block">
           <Card className="border-border bg-card transition-colors active:bg-secondary/50">

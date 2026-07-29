@@ -2,20 +2,29 @@ import {
   collection,
   deleteDoc,
   doc,
+  endAt,
   getDoc,
   getDocs,
   increment,
+  limit,
   orderBy,
   query,
   setDoc,
+  startAt,
   updateDoc,
   where,
 } from "firebase/firestore";
 import type {
+  Block,
   Checkin,
+  CheckinComment,
+  CheckinReaction,
   Exercise,
   ExerciseAdvice,
   ExerciseRecord,
+  Friend,
+  FriendRequest,
+  PublicProfile,
   UserProfile,
   WorkoutLog,
   WorkoutTemplate,
@@ -24,6 +33,11 @@ import { SEED_EXERCISES } from "@/data/exercises";
 import { getUid } from "@/lib/firebase";
 import { getDb } from "@/lib/firestoreDb";
 import type { Repositories } from "../interfaces";
+
+/** 2つのUIDを並べ替えて連結した、フレンド関係の一意なドキュメントID */
+function sortedPairId(a: string, b: string): string {
+  return a < b ? `${a}_${b}` : `${b}_${a}`;
+}
 
 /**
  * Firestore 実装（docs/05-database-design.md のコレクション設計に対応）。
@@ -114,13 +128,24 @@ export function createFirestoreRepositories(): Repositories {
           xp: 0,
           createdAt: new Date().toISOString(),
         };
-        await setDoc(ref, fresh);
+        // 初期プロフィールの作成は待たない（fire-and-forget）。
+        // オフライン起動時、Firestore の書き込み Promise は接続が戻るまで
+        // 解決しないため、await するとホームの読み込みが固まってしまう。
+        void setDoc(ref, fresh).catch((e) =>
+          console.error("初期プロフィールの保存に失敗", e),
+        );
         return fresh;
       },
       async save(profile) {
-        await setDoc(doc(getDb(), "users", await getUid()), profile, {
-          merge: true,
-        });
+        const uid = await getUid();
+        await setDoc(doc(getDb(), "users", uid), profile, { merge: true });
+        // 表示名だけは公開ミラー（publicProfiles）にも反映する。
+        // フレンド検索・表示は users/{uid}（私的）を読めないため、ここで同期する。
+        await setDoc(
+          doc(getDb(), "publicProfiles", uid),
+          { uid, displayName: profile.displayName, updatedAt: new Date().toISOString() },
+          { merge: true },
+        ).catch((e) => console.error("公開プロフィールの同期に失敗", e));
       },
     },
 
@@ -158,6 +183,40 @@ export function createFirestoreRepositories(): Repositories {
       async delete(id) {
         await deleteDoc(doc(getDb(), "checkins", id));
       },
+      async getReactions(checkinId) {
+        const snap = await getDocs(
+          collection(getDb(), "checkins", checkinId, "reactions"),
+        );
+        return snap.docs.map((d) => d.data() as CheckinReaction);
+      },
+      async setReaction(checkinId, userId, reaction) {
+        const ref = doc(getDb(), "checkins", checkinId, "reactions", userId);
+        if (reaction === null) {
+          await deleteDoc(ref);
+          return;
+        }
+        await setDoc(ref, { ...reaction, userId });
+      },
+      async getComments(checkinId) {
+        const snap = await getDocs(
+          query(
+            collection(getDb(), "checkins", checkinId, "comments"),
+            orderBy("createdAt", "desc"),
+          ),
+        );
+        return snap.docs.map((d) => d.data() as CheckinComment);
+      },
+      async addComment(checkinId, comment) {
+        await setDoc(
+          doc(getDb(), "checkins", checkinId, "comments", comment.id),
+          comment,
+        );
+      },
+      async deleteComment(checkinId, commentId) {
+        await deleteDoc(
+          doc(getDb(), "checkins", checkinId, "comments", commentId),
+        );
+      },
     },
 
     advice: {
@@ -182,6 +241,188 @@ export function createFirestoreRepositories(): Repositories {
         await updateDoc(doc(getDb(), "exerciseAdvice", id), {
           likeCount: increment(delta),
         });
+      },
+    },
+
+    social: {
+      async getPublicProfile(uid) {
+        const snap = await getDoc(doc(getDb(), "publicProfiles", uid));
+        return snap.exists() ? (snap.data() as PublicProfile) : null;
+      },
+      async searchProfilesByName(prefix, limitN = 20) {
+        const term = prefix.trim();
+        if (!term) return [];
+        // 表示名の前方一致（Firestore の範囲クエリ）。末尾に高コードポイントの
+        // 番兵(\uf8ff)を付けて前方一致の範囲にする定番手法。
+        const snap = await getDocs(
+          query(
+            collection(getDb(), "publicProfiles"),
+            orderBy("displayName"),
+            startAt(term),
+            endAt(term + "\uf8ff"),
+            limit(limitN),
+          ),
+        );
+        return snap.docs.map((d) => d.data() as PublicProfile);
+      },
+
+      async sendFriendRequest(request) {
+        await setDoc(doc(getDb(), "friendRequests", request.id), request);
+      },
+      async getReceivedRequests(uid) {
+        // 複合インデックスを避けるため、等値1つで取得し status はクライアント側で絞る
+        const snap = await getDocs(
+          query(collection(getDb(), "friendRequests"), where("toUserId", "==", uid)),
+        );
+        return snap.docs
+          .map((d) => d.data() as FriendRequest)
+          .filter((r) => r.status === "pending")
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      },
+      async getSentRequests(uid) {
+        const snap = await getDocs(
+          query(collection(getDb(), "friendRequests"), where("fromUserId", "==", uid)),
+        );
+        return snap.docs
+          .map((d) => d.data() as FriendRequest)
+          .filter((r) => r.status === "pending")
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      },
+      async acceptFriendRequest(requestId, fromUserId, toUserId) {
+        // 先に申請を accepted にしてから friends を作る
+        // （friends 作成ルールが「参照する申請が accepted か」を get() で検証するため）
+        await updateDoc(doc(getDb(), "friendRequests", requestId), {
+          status: "accepted",
+        });
+        const pairId = sortedPairId(fromUserId, toUserId);
+        await setDoc(doc(getDb(), "friends", pairId), {
+          id: pairId,
+          userIds: [fromUserId, toUserId].sort(),
+          sourceRequestId: requestId,
+          createdAt: new Date().toISOString(),
+        });
+      },
+      async declineFriendRequest(requestId) {
+        await updateDoc(doc(getDb(), "friendRequests", requestId), {
+          status: "declined",
+        });
+      },
+      async cancelFriendRequest(requestId) {
+        await deleteDoc(doc(getDb(), "friendRequests", requestId));
+      },
+      async getFriends(uid) {
+        const snap = await getDocs(
+          query(
+            collection(getDb(), "friends"),
+            where("userIds", "array-contains", uid),
+          ),
+        );
+        return snap.docs.map((d) => d.data() as Friend);
+      },
+      async getRelationship(myUid, otherUid) {
+        if (myUid === otherUid) return { state: "self" };
+        // ブロックを最優先で判定する
+        const [blockedByMe, blockedByThem] = await Promise.all([
+          getDoc(doc(getDb(), "blocks", `${myUid}_${otherUid}`)),
+          getDoc(doc(getDb(), "blocks", `${otherUid}_${myUid}`)),
+        ]);
+        if (blockedByMe.exists()) return { state: "blocked_by_me" };
+        if (blockedByThem.exists()) return { state: "blocked_by_them" };
+
+        const pairId = sortedPairId(myUid, otherUid);
+        const friendSnap = await getDoc(doc(getDb(), "friends", pairId));
+        if (friendSnap.exists()) return { state: "friends" };
+
+        const [sentSnap, receivedSnap] = await Promise.all([
+          getDocs(
+            query(
+              collection(getDb(), "friendRequests"),
+              where("fromUserId", "==", myUid),
+            ),
+          ),
+          getDocs(
+            query(
+              collection(getDb(), "friendRequests"),
+              where("toUserId", "==", myUid),
+            ),
+          ),
+        ]);
+        const sent = sentSnap.docs
+          .map((d) => d.data() as FriendRequest)
+          .find((r) => r.toUserId === otherUid && r.status === "pending");
+        if (sent) return { state: "pending_sent", requestId: sent.id };
+        const received = receivedSnap.docs
+          .map((d) => d.data() as FriendRequest)
+          .find((r) => r.fromUserId === otherUid && r.status === "pending");
+        if (received) return { state: "pending_received", requestId: received.id };
+        return { state: "none" };
+      },
+
+      async blockUser(blockerUserId, blockedUserId) {
+        const blockId = `${blockerUserId}_${blockedUserId}`;
+        await setDoc(doc(getDb(), "blocks", blockId), {
+          blockerUserId,
+          blockedUserId,
+          createdAt: new Date().toISOString(),
+        });
+        // 既存フレンド関係を自動解除（当事者なので削除可）
+        await deleteDoc(
+          doc(getDb(), "friends", sortedPairId(blockerUserId, blockedUserId)),
+        ).catch(() => undefined);
+        // 2者間の保留中の申請を片付ける（自分の送信は取消、相手からの受信は拒否）
+        try {
+          const [sentSnap, recvSnap] = await Promise.all([
+            getDocs(
+              query(
+                collection(getDb(), "friendRequests"),
+                where("fromUserId", "==", blockerUserId),
+              ),
+            ),
+            getDocs(
+              query(
+                collection(getDb(), "friendRequests"),
+                where("toUserId", "==", blockerUserId),
+              ),
+            ),
+          ]);
+          await Promise.all(
+            sentSnap.docs
+              .filter((d) => {
+                const r = d.data() as FriendRequest;
+                return r.toUserId === blockedUserId && r.status === "pending";
+              })
+              .map((d) => deleteDoc(d.ref)),
+          );
+          await Promise.all(
+            recvSnap.docs
+              .filter((d) => {
+                const r = d.data() as FriendRequest;
+                return r.fromUserId === blockedUserId && r.status === "pending";
+              })
+              .map((d) => updateDoc(d.ref, { status: "declined" })),
+          );
+        } catch (e) {
+          console.error("ブロック時の申請クリーンアップに失敗", e);
+        }
+      },
+      async unblockUser(blockerUserId, blockedUserId) {
+        await deleteDoc(
+          doc(getDb(), "blocks", `${blockerUserId}_${blockedUserId}`),
+        );
+      },
+      async getBlockedUserIds(uid) {
+        const [iBlockedSnap, blockedMeSnap] = await Promise.all([
+          getDocs(
+            query(collection(getDb(), "blocks"), where("blockerUserId", "==", uid)),
+          ),
+          getDocs(
+            query(collection(getDb(), "blocks"), where("blockedUserId", "==", uid)),
+          ),
+        ]);
+        return {
+          iBlocked: iBlockedSnap.docs.map((d) => (d.data() as Block).blockedUserId),
+          blockedMe: blockedMeSnap.docs.map((d) => (d.data() as Block).blockerUserId),
+        };
       },
     },
   };
