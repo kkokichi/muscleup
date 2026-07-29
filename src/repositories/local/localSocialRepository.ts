@@ -37,4 +37,13 @@ export const localSocialRepository: SocialRepository = {
   async getRelationship() {
     return { state: "none" };
   },
+  async blockUser() {
+    /* no-op */
+  },
+  async unblockUser() {
+    /* no-op */
+  },
+  async getBlockedUserIds() {
+    return { iBlocked: [], blockedMe: [] };
+  },
 };

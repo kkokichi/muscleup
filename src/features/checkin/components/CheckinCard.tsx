@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, MessageCircle } from "lucide-react";
+import { Ban, MapPin, MessageCircle } from "lucide-react";
 import type { Checkin } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,8 @@ interface CheckinCardProps {
   currentUserId?: string | null;
   /** 閲覧中ユーザーの表示名 */
   currentUserName?: string;
+  /** 投稿者をブロックする。指定時かつ他人の投稿にのみブロックボタンを表示 */
+  onBlock?: (userId: string) => void;
 }
 
 /** チェックイン1件の表示（フォールバックリスト・履歴で共通利用） */
@@ -27,6 +29,7 @@ export function CheckinCard({
   checkin,
   currentUserId = null,
   currentUserName = "トレーニー",
+  onBlock,
 }: CheckinCardProps) {
   const { counts, myType, toggle, canReact } = useCheckinReactions({
     checkinId: checkin.id,
@@ -94,6 +97,18 @@ export function CheckinCard({
                 <MessageCircle className="size-3.5" />
                 コメント
               </button>
+
+              {onBlock && currentUserId && checkin.userId !== currentUserId && (
+                <button
+                  type="button"
+                  onClick={() => onBlock(checkin.userId)}
+                  className="ml-auto inline-flex items-center gap-1 rounded-full border border-border bg-secondary/40 px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-colors active:bg-secondary"
+                  aria-label={`${checkin.authorName}をブロック`}
+                >
+                  <Ban className="size-3.5" />
+                  ブロック
+                </button>
+              )}
             </div>
 
             {showComments && (

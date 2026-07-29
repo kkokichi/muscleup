@@ -114,6 +114,19 @@ export interface SocialRepository {
   getFriends(uid: string): Promise<Friend[]>;
   /** 自分と相手の関係 */
   getRelationship(myUid: string, otherUid: string): Promise<FriendRelation>;
+
+  // --- ブロック ---
+  /**
+   * 相手をブロックする。既存のフレンド関係は自動解除し、2者間の保留中の申請も
+   * 片付ける（自分の送信は取消、相手からの受信は拒否）。
+   */
+  blockUser(blockerUserId: string, blockedUserId: string): Promise<void>;
+  /** ブロックを解除する */
+  unblockUser(blockerUserId: string, blockedUserId: string): Promise<void>;
+  /** 自分が関与するブロック（自分がした側・された側の相手UID） */
+  getBlockedUserIds(
+    uid: string,
+  ): Promise<{ iBlocked: string[]; blockedMe: string[] }>;
 }
 
 export interface Repositories {

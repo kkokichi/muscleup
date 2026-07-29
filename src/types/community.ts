@@ -105,12 +105,25 @@ export type FriendRelationState =
   | "none"
   | "pending_sent"
   | "pending_received"
-  | "friends";
+  | "friends"
+  | "blocked_by_me"
+  | "blocked_by_them";
 
 export interface FriendRelation {
   state: FriendRelationState;
   /** pending_received のとき、承認に使う申請ID */
   requestId?: string;
+}
+
+/**
+ * ブロック関係。ドキュメントID = `${blockerUserId}_${blockedUserId}`。
+ * blocker（本人）のみ作成・削除でき、当事者2名が読み取れる。
+ */
+export interface Block {
+  blockerUserId: string;
+  blockedUserId: string;
+  /** ISO 8601 */
+  createdAt: string;
 }
 
 /** 種目へのアドバイス・コツの共有投稿 */

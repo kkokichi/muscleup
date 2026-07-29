@@ -18,6 +18,11 @@ service cloud.firestore {
         && ((r.fromUserId == uidA && r.toUserId == uidB)
             || (r.fromUserId == uidB && r.toUserId == uidA));
     }
+    // 2者間にブロック関係が無いこと（どちらの向きも）
+    function notBlockedPair(uidA, uidB) {
+      return !exists(/databases/$(database)/documents/blocks/$(uidA + '_' + uidB))
+        && !exists(/databases/$(database)/documents/blocks/$(uidB + '_' + uidA));
+    }
 
     // 個人データ: 本人のみ読み書き可
     match /users/{userId} {
@@ -52,7 +57,9 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.resource.data.fromUserId == request.auth.uid
         && request.resource.data.fromUserId != request.resource.data.toUserId
-        && request.resource.data.status == 'pending';
+        && request.resource.data.status == 'pending'
+        && notBlockedPair(request.resource.data.fromUserId,
+                          request.resource.data.toUserId);
       allow update: if request.auth != null
         && resource.data.toUserId == request.auth.uid
         && resource.data.status == 'pending'
@@ -80,6 +87,24 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if request.auth != null
         && request.auth.uid in resource.data.userIds;
+    }
+
+    // ブロック: ドキュメントID = {blocker}_{blocked}。
+    // 作成/削除は blocker 本人のみ、読み取りは当事者2名のみ（最小権限・SECURITY-06）。
+    // 自己ブロックは禁止。更新は不可。
+    match /blocks/{blockId} {
+      allow read: if request.auth != null
+        && (resource == null
+            || resource.data.blockerUserId == request.auth.uid
+            || resource.data.blockedUserId == request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.blockerUserId == request.auth.uid
+        && request.resource.data.blockedUserId != request.auth.uid
+        && blockId == request.resource.data.blockerUserId + '_'
+                      + request.resource.data.blockedUserId;
+      allow update: if false;
+      allow delete: if request.auth != null
+        && resource.data.blockerUserId == request.auth.uid;
     }
 
     // ジムチェックイン（共有）: 認証済みは全件読み取り可。

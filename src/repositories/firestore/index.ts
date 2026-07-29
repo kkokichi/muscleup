@@ -15,6 +15,7 @@ import {
   where,
 } from "firebase/firestore";
 import type {
+  Block,
   Checkin,
   CheckinComment,
   CheckinReaction,
@@ -320,6 +321,14 @@ export function createFirestoreRepositories(): Repositories {
       },
       async getRelationship(myUid, otherUid) {
         if (myUid === otherUid) return { state: "self" };
+        // ブロックを最優先で判定する
+        const [blockedByMe, blockedByThem] = await Promise.all([
+          getDoc(doc(getDb(), "blocks", `${myUid}_${otherUid}`)),
+          getDoc(doc(getDb(), "blocks", `${otherUid}_${myUid}`)),
+        ]);
+        if (blockedByMe.exists()) return { state: "blocked_by_me" };
+        if (blockedByThem.exists()) return { state: "blocked_by_them" };
+
         const pairId = sortedPairId(myUid, otherUid);
         const friendSnap = await getDoc(doc(getDb(), "friends", pairId));
         if (friendSnap.exists()) return { state: "friends" };
@@ -347,6 +356,73 @@ export function createFirestoreRepositories(): Repositories {
           .find((r) => r.fromUserId === otherUid && r.status === "pending");
         if (received) return { state: "pending_received", requestId: received.id };
         return { state: "none" };
+      },
+
+      async blockUser(blockerUserId, blockedUserId) {
+        const blockId = `${blockerUserId}_${blockedUserId}`;
+        await setDoc(doc(getDb(), "blocks", blockId), {
+          blockerUserId,
+          blockedUserId,
+          createdAt: new Date().toISOString(),
+        });
+        // 既存フレンド関係を自動解除（当事者なので削除可）
+        await deleteDoc(
+          doc(getDb(), "friends", sortedPairId(blockerUserId, blockedUserId)),
+        ).catch(() => undefined);
+        // 2者間の保留中の申請を片付ける（自分の送信は取消、相手からの受信は拒否）
+        try {
+          const [sentSnap, recvSnap] = await Promise.all([
+            getDocs(
+              query(
+                collection(getDb(), "friendRequests"),
+                where("fromUserId", "==", blockerUserId),
+              ),
+            ),
+            getDocs(
+              query(
+                collection(getDb(), "friendRequests"),
+                where("toUserId", "==", blockerUserId),
+              ),
+            ),
+          ]);
+          await Promise.all(
+            sentSnap.docs
+              .filter((d) => {
+                const r = d.data() as FriendRequest;
+                return r.toUserId === blockedUserId && r.status === "pending";
+              })
+              .map((d) => deleteDoc(d.ref)),
+          );
+          await Promise.all(
+            recvSnap.docs
+              .filter((d) => {
+                const r = d.data() as FriendRequest;
+                return r.fromUserId === blockedUserId && r.status === "pending";
+              })
+              .map((d) => updateDoc(d.ref, { status: "declined" })),
+          );
+        } catch (e) {
+          console.error("ブロック時の申請クリーンアップに失敗", e);
+        }
+      },
+      async unblockUser(blockerUserId, blockedUserId) {
+        await deleteDoc(
+          doc(getDb(), "blocks", `${blockerUserId}_${blockedUserId}`),
+        );
+      },
+      async getBlockedUserIds(uid) {
+        const [iBlockedSnap, blockedMeSnap] = await Promise.all([
+          getDocs(
+            query(collection(getDb(), "blocks"), where("blockerUserId", "==", uid)),
+          ),
+          getDocs(
+            query(collection(getDb(), "blocks"), where("blockedUserId", "==", uid)),
+          ),
+        ]);
+        return {
+          iBlocked: iBlockedSnap.docs.map((d) => (d.data() as Block).blockedUserId),
+          blockedMe: blockedMeSnap.docs.map((d) => (d.data() as Block).blockerUserId),
+        };
       },
     },
   };

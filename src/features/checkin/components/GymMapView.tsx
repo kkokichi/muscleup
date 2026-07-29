@@ -13,6 +13,7 @@ import { LoginPrompt } from "@/components/common/LoginPrompt";
 import { Mascot } from "@/features/mascot/components/Mascot";
 import { useMascotStore } from "@/stores/mascotStore";
 import { useCheckins } from "../hooks/useCheckins";
+import { useBlockedUsers } from "../hooks/useBlockedUsers";
 import { CheckinMapCanvas } from "./CheckinMapCanvas";
 import { CheckinComposer } from "./CheckinComposer";
 import { CheckinCard } from "./CheckinCard";
@@ -23,6 +24,12 @@ export function GymMapView() {
   const { checkins, isLoading, needsLogin, error, addCheckin } = useCheckins();
   const { name, saveName } = useUserName();
   const { user } = useAuthUser();
+  const { hiddenIds, block } = useBlockedUsers();
+  // ブロックした相手・自分をブロックした相手のチェックインを隠す
+  const visibleCheckins = useMemo(
+    () => checkins.filter((c) => !hiddenIds.has(c.userId)),
+    [checkins, hiddenIds],
+  );
   const speak = useMascotStore((s) => s.speak);
   const [composerOpen, setComposerOpen] = useState(false);
   const mapsOn = isMapsConfigured();
@@ -82,7 +89,7 @@ export function GymMapView() {
         <h2 className="mb-2 text-sm font-bold">最近のチェックイン</h2>
         {!mounted || isLoading ? (
           <div className="h-20 animate-pulse rounded-2xl bg-card" />
-        ) : checkins.length === 0 ? (
+        ) : visibleCheckins.length === 0 ? (
           <Card className="border-border bg-card">
             <CardContent className="flex flex-col items-center gap-2 p-8 text-center">
               <Mascot mood="happy" size={80} />
@@ -94,12 +101,21 @@ export function GymMapView() {
           </Card>
         ) : (
           <div className="space-y-2">
-            {checkins.map((c) => (
+            {visibleCheckins.map((c) => (
               <CheckinCard
                 key={c.id}
                 checkin={c}
                 currentUserId={user?.uid ?? null}
                 currentUserName={name}
+                onBlock={(uid) => {
+                  if (
+                    window.confirm(
+                      `${c.authorName}さんをブロックしますか？\n（フレンドなら解除され、投稿が表示されなくなります）`,
+                    )
+                  ) {
+                    void block(uid);
+                  }
+                }}
               />
             ))}
           </div>
