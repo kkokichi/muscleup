@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Ban, MapPin, MessageCircle } from "lucide-react";
+import { MapPin, MessageCircle } from "lucide-react";
 import type { Checkin } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { formatDateShort } from "@/utils/date";
+import { FriendButton } from "@/features/friends/components/FriendButton";
 import { useCheckinReactions } from "../hooks/useCheckinReactions";
 import { CheckinComments } from "./CheckinComments";
 import {
@@ -20,8 +21,8 @@ interface CheckinCardProps {
   currentUserId?: string | null;
   /** 閲覧中ユーザーの表示名 */
   currentUserName?: string;
-  /** 投稿者をブロックする。指定時かつ他人の投稿にのみブロックボタンを表示 */
-  onBlock?: (userId: string) => void;
+  /** フレンド/ブロック状態が変わったとき（フィードの再フィルタ用） */
+  onRelationChanged?: () => void;
 }
 
 /** チェックイン1件の表示（フォールバックリスト・履歴で共通利用） */
@@ -29,7 +30,7 @@ export function CheckinCard({
   checkin,
   currentUserId = null,
   currentUserName = "トレーニー",
-  onBlock,
+  onRelationChanged,
 }: CheckinCardProps) {
   const { counts, myType, toggle, canReact } = useCheckinReactions({
     checkinId: checkin.id,
@@ -98,17 +99,13 @@ export function CheckinCard({
                 コメント
               </button>
 
-              {onBlock && currentUserId && checkin.userId !== currentUserId && (
-                <button
-                  type="button"
-                  onClick={() => onBlock(checkin.userId)}
-                  className="ml-auto inline-flex items-center gap-1 rounded-full border border-border bg-secondary/40 px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-colors active:bg-secondary"
-                  aria-label={`${checkin.authorName}をブロック`}
-                >
-                  <Ban className="size-3.5" />
-                  ブロック
-                </button>
-              )}
+              <span className="ml-auto">
+                <FriendButton
+                  userId={checkin.userId}
+                  userName={checkin.authorName}
+                  onChanged={onRelationChanged}
+                />
+              </span>
             </div>
 
             {showComments && (

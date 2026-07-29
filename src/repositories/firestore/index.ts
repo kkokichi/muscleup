@@ -350,7 +350,7 @@ export function createFirestoreRepositories(): Repositories {
         const sent = sentSnap.docs
           .map((d) => d.data() as FriendRequest)
           .find((r) => r.toUserId === otherUid && r.status === "pending");
-        if (sent) return { state: "pending_sent" };
+        if (sent) return { state: "pending_sent", requestId: sent.id };
         const received = receivedSnap.docs
           .map((d) => d.data() as FriendRequest)
           .find((r) => r.fromUserId === otherUid && r.status === "pending");

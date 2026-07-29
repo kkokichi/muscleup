@@ -24,7 +24,7 @@ export function GymMapView() {
   const { checkins, isLoading, needsLogin, error, addCheckin } = useCheckins();
   const { name, saveName } = useUserName();
   const { user } = useAuthUser();
-  const { hiddenIds, block } = useBlockedUsers();
+  const { hiddenIds, reload: reloadBlocked } = useBlockedUsers();
   // ブロックした相手・自分をブロックした相手のチェックインを隠す
   const visibleCheckins = useMemo(
     () => checkins.filter((c) => !hiddenIds.has(c.userId)),
@@ -107,15 +107,7 @@ export function GymMapView() {
                 checkin={c}
                 currentUserId={user?.uid ?? null}
                 currentUserName={name}
-                onBlock={(uid) => {
-                  if (
-                    window.confirm(
-                      `${c.authorName}さんをブロックしますか？\n（フレンドなら解除され、投稿が表示されなくなります）`,
-                    )
-                  ) {
-                    void block(uid);
-                  }
-                }}
+                onRelationChanged={reloadBlocked}
               />
             ))}
           </div>
