@@ -39,24 +39,37 @@ const LEGACY_GOOGLE_SESSION_KEY = "muscleup:v1:googleSession";
 
 export function rememberAuthSession(): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(AUTH_SESSION_KEY, "true");
+  try {
+    window.localStorage.setItem(AUTH_SESSION_KEY, "true");
+  } catch {
+    // Safari のプライベートブラウズ等で localStorage が使えなくても、
+    // Firebase Auth の実際の認証状態は利用できる。
+  }
 }
 
 export function clearKnownAuthSession(): void {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(AUTH_SESSION_KEY);
-  window.localStorage.removeItem(LEGACY_GOOGLE_SESSION_KEY);
+  try {
+    window.localStorage.removeItem(AUTH_SESSION_KEY);
+    window.localStorage.removeItem(LEGACY_GOOGLE_SESSION_KEY);
+  } catch {
+    // localStorage が利用不可でもログアウト処理自体は継続する。
+  }
 }
 
 export function hasKnownAuthSession(): boolean {
   if (typeof window === "undefined") return false;
-  if (window.localStorage.getItem(AUTH_SESSION_KEY) === "true") return true;
-  if (window.localStorage.getItem(LEGACY_GOOGLE_SESSION_KEY) === "true") return true;
+  try {
+    if (window.localStorage.getItem(AUTH_SESSION_KEY) === "true") return true;
+    if (window.localStorage.getItem(LEGACY_GOOGLE_SESSION_KEY) === "true") return true;
 
-  const { apiKey } = getFirebaseConfig();
-  return Object.keys(window.localStorage).some((key) =>
-    key.startsWith(`firebase:authUser:${apiKey}:`),
-  );
+    const { apiKey } = getFirebaseConfig();
+    return Object.keys(window.localStorage).some((key) =>
+      key.startsWith(`firebase:authUser:${apiKey}:`),
+    );
+  } catch {
+    return false;
+  }
 }
 
 function getFirebaseConfig() {
