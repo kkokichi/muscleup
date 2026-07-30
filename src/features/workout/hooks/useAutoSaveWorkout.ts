@@ -34,6 +34,22 @@ async function persistDraft(draft: WorkoutDraft): Promise<boolean> {
   return true;
 }
 
+/** 全セット削除時は、同じIDで自動保存済みの記録も消してその日を空に戻す。 */
+async function removePersistedDraft(draft: WorkoutDraft): Promise<boolean> {
+  if (!draft.activeLogId) return false;
+  const repos = await getRepos();
+  const existing = await repos.workoutLogs.getById(draft.activeLogId);
+  if (!existing) return false;
+
+  await repos.workoutLogs.delete(draft.activeLogId);
+  const [logs, existingRecords] = await Promise.all([
+    repos.workoutLogs.getAll(),
+    repos.records.getAll(),
+  ]);
+  await repos.records.replaceAll(rebuildRecordsFromLogs(logs, existingRecords));
+  return true;
+}
+
 export function useAutoSaveWorkout(draft: WorkoutDraft | null): AutoSaveState {
   const [status, setStatus] = useState<AutoSaveStatus>("idle");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
@@ -45,9 +61,20 @@ export function useAutoSaveWorkout(draft: WorkoutDraft | null): AutoSaveState {
   }, [draft]);
 
   const saveNow = useCallback(async () => {
-    if (!draft || !canPersistDraft(draft)) return false;
+    if (!draft) return false;
     const sequence = latestSequence.current + 1;
     latestSequence.current = sequence;
+    if (!canPersistDraft(draft)) {
+      try {
+        const removed = await removePersistedDraft(draft);
+        if (latestSequence.current === sequence) setStatus("idle");
+        return removed;
+      } catch (error) {
+        console.error("空になったワークアウトの削除に失敗", error);
+        if (latestSequence.current === sequence) setStatus("error");
+        return false;
+      }
+    }
     setStatus("saving");
     try {
       const saved = await persistDraft(draft);
@@ -68,9 +95,24 @@ export function useAutoSaveWorkout(draft: WorkoutDraft | null): AutoSaveState {
   }, [draft]);
 
   useEffect(() => {
-    if (!draft || !canPersistDraft(draft)) {
+    if (!draft) {
       const idleTimer = window.setTimeout(() => setStatus("idle"), 0);
       return () => window.clearTimeout(idleTimer);
+    }
+
+    if (!canPersistDraft(draft)) {
+      const sequence = latestSequence.current + 1;
+      latestSequence.current = sequence;
+      const clearTimer = window.setTimeout(async () => {
+        try {
+          await removePersistedDraft(draft);
+          if (latestSequence.current === sequence) setStatus("idle");
+        } catch (error) {
+          console.error("空になったワークアウトの削除に失敗", error);
+          if (latestSequence.current === sequence) setStatus("error");
+        }
+      }, 0);
+      return () => window.clearTimeout(clearTimer);
     }
 
     const sequence = latestSequence.current + 1;

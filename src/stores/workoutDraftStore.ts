@@ -43,6 +43,12 @@ function updateEntry(
   };
 }
 
+/** 全セットを削除したら、その日の入力開始・終了時刻も未開始へ戻す。 */
+function clearInputTimesWhenEmpty(draft: WorkoutDraft): WorkoutDraft {
+  if (draft.entries.some((entry) => entry.sets.length > 0)) return draft;
+  return { ...draft, firstInputAt: undefined, lastInputAt: undefined };
+}
+
 /** セット入力のたびに最初/最後の入力時刻を記録する */
 function touchInput(draft: WorkoutDraft): Pick<WorkoutDraft, "firstInputAt" | "lastInputAt"> {
   const now = new Date().toISOString();
@@ -163,11 +169,12 @@ export const useWorkoutDraftStore = create<WorkoutDraftState>()(
       removeExercise: (exerciseId) => {
         const { draft } = get();
         if (!draft) return;
+        const next = {
+          ...draft,
+          entries: draft.entries.filter((e) => e.exerciseId !== exerciseId),
+        };
         set({
-          draft: {
-            ...draft,
-            entries: draft.entries.filter((e) => e.exerciseId !== exerciseId),
-          },
+          draft: clearInputTimesWhenEmpty(next),
         });
       },
 
@@ -190,10 +197,11 @@ export const useWorkoutDraftStore = create<WorkoutDraftState>()(
       removeSet: (exerciseId, setIndex) => {
         const { draft } = get();
         if (!draft) return;
+        const next = updateEntry(draft, exerciseId, (sets) =>
+          sets.filter((_, i) => i !== setIndex),
+        );
         set({
-          draft: updateEntry(draft, exerciseId, (sets) =>
-            sets.filter((_, i) => i !== setIndex),
-          ),
+          draft: clearInputTimesWhenEmpty(next),
         });
       },
 

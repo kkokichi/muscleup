@@ -91,8 +91,8 @@ export function MonthlyCalendarCard({ logs, exerciseById }: MonthlyCalendarCardP
             return (
               <Link
                 key={day.iso}
-                href={`/history/detail?date=${day.iso}`}
-                aria-label={`${day.iso}の記録詳細`}
+                href={`/workout/new?date=${day.iso}`}
+                aria-label={`${day.iso}の記録を入力・編集`}
                 style={
                   color
                     ? {

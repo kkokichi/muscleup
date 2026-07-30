@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { CalendarDays, Clock, Plus } from "lucide-react";
 import type { ExerciseRecord, WorkoutEntry, WorkoutLog } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,14 @@ function buildSessionIndex(
 }
 
 export function WorkoutRecorder() {
+  const searchParams = useSearchParams();
+  const requestedLogId = searchParams.get("id");
+  const requestedDate = searchParams.get("date");
+  const requestedKey = requestedLogId
+    ? `id:${requestedLogId}`
+    : requestedDate
+      ? `date:${requestedDate}`
+      : null;
   const mounted = useHasMounted();
   const {
     draft,
@@ -59,6 +68,7 @@ export function WorkoutRecorder() {
   const { saveNow } = useAutoSaveWorkout(draft);
   const [pickerOpen, setPickerOpen] = useState(false);
   const hydratedRef = useRef(false);
+  const initializedRequestRef = useRef<string | null>(null);
 
   // 画面を離れるときに最新状態を確実に保存する（デバウンス保存の取りこぼし防止）
   const saveNowRef = useRef(saveNow);
@@ -73,6 +83,7 @@ export function WorkoutRecorder() {
 
   useEffect(() => {
     if (!mounted) return;
+    if (requestedKey) return;
     const existing = useWorkoutDraftStore.getState().draft;
     if (!existing) {
       startWorkout();
@@ -81,18 +92,48 @@ export function WorkoutRecorder() {
     // その日のうちに触れた下書きは継続する。日付が変わっていれば、前日分は
     // 自動保存済みなので、今日の新しい下書きを開始する（＝終了ボタンの代替）。
     const lastActiveDay = isoToLocalDate(existing.lastInputAt ?? existing.startedAt);
-    if (lastActiveDay !== todayISO()) {
+    if (existing.date !== todayISO() || lastActiveDay !== todayISO()) {
       clear();
       startWorkout();
     } else {
       ensureActiveLogId();
     }
-  }, [mounted, startWorkout, ensureActiveLogId, clear]);
+  }, [mounted, requestedKey, startWorkout, ensureActiveLogId, clear]);
+
+  // ホーム・履歴から開いた過去記録を、通常の入力画面へそのまま復元する。
+  useEffect(() => {
+    if (!mounted || logsLoading || !requestedKey) return;
+    if (initializedRequestRef.current === requestedKey) return;
+
+    const target = requestedLogId
+      ? logs.find((log) => log.id === requestedLogId)
+      : logs.find((log) => log.date === requestedDate);
+    if (target) {
+      resumeFromLog(target);
+    } else if (requestedDate) {
+      clear();
+      startWorkout();
+      setDate(requestedDate);
+    }
+    hydratedRef.current = true;
+    initializedRequestRef.current = requestedKey;
+  }, [
+    mounted,
+    logsLoading,
+    logs,
+    requestedKey,
+    requestedLogId,
+    requestedDate,
+    resumeFromLog,
+    clear,
+    startWorkout,
+    setDate,
+  ]);
 
   // 終了後に再度開いたとき、その日の保存済みワークアウトを読み込んで続きを編集できるようにする。
   // 入力中の下書き（種目が既にある状態）は上書きしない。
   useEffect(() => {
-    if (!mounted || logsLoading || hydratedRef.current) return;
+    if (!mounted || logsLoading || requestedKey || hydratedRef.current) return;
     const current = useWorkoutDraftStore.getState().draft;
     if (!current || current.entries.length > 0) return;
     const savedToday = logs.find((log) => log.date === current.date);
@@ -100,7 +141,7 @@ export function WorkoutRecorder() {
       hydratedRef.current = true;
       resumeFromLog(savedToday);
     }
-  }, [mounted, logsLoading, logs, resumeFromLog]);
+  }, [mounted, logsLoading, logs, requestedKey, resumeFromLog]);
 
   // 記録中の日付の分は「過去の履歴」ではないので除外する（下書きに同じ内容が入っている）
   const sessionIndex = useMemo(

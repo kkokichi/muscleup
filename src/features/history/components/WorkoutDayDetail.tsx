@@ -138,7 +138,7 @@ export function WorkoutDayDetail({ date }: { date: string }) {
                     {dayLogs.length > 1 ? `セッション ${i + 1}` : "ワークアウト詳細"}
                   </p>
                   <Link
-                    href={`/history/detail?id=${log.id}`}
+                    href={`/workout/new?id=${log.id}`}
                     className="flex items-center gap-1 text-xs font-semibold text-primary"
                   >
                     <Pencil className="size-3.5" />
