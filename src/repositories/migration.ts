@@ -26,14 +26,6 @@ export async function localHasPersonalData(): Promise<boolean> {
   );
 }
 
-/** ログイン中アカウントのクラウドに記録が存在するか。 */
-export async function cloudHasData(): Promise<boolean> {
-  const mod = await import("./firestore");
-  const cloud = mod.createFirestoreRepositories();
-  const cloudLogs = await cloud.workoutLogs.getAll();
-  return cloudLogs.length > 0;
-}
-
 /**
  * 端末ローカルの個人データをアカウント（Firestore）へ移行する。
  * クラウドに既にデータがある場合（別端末で使用済み等）は上書きしない。

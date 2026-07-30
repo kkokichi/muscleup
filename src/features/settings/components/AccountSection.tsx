@@ -17,7 +17,6 @@ import {
   signUpWithEmail,
 } from "@/lib/firebase";
 import {
-  cloudHasData,
   localHasPersonalData,
   migrateLocalToCloud,
 } from "@/repositories/migration";
@@ -92,34 +91,23 @@ export function AccountSection() {
     };
   }, [user]);
 
-  const finishLogin = async (isSignup: boolean) => {
-    if (isSignup) {
-      // 新規登録: 自分の新アカウントに、この端末の現在のデータを引き継ぐ
-      await migrateLocalToCloud();
-    } else {
-      // ログイン: アカウント（クラウド）のデータを正とし、端末ローカルは自動合流しない。
-      // 「端末にローカルがあり、かつアカウントが空」のときだけ、取り込みを明示確認する。
-      // （他端末のローカル記録がアカウントに混入するのを防ぐ）
-      try {
-        if ((await localHasPersonalData()) && !(await cloudHasData())) {
-          const ok = window.confirm(
-            "この端末に保存された記録があります。\n" +
-              "ログインしたアカウントに取り込みますか？\n" +
-              "「キャンセル」を選ぶと、アカウントに保存済みの記録が表示されます。",
-          );
-          if (ok) await migrateLocalToCloud();
-        }
-      } catch (err) {
-        console.error("ログイン時のデータ確認に失敗", err);
-      }
-    }
-    // Repository Factory を再評価し、画面を再マウントしてデータを取り直す。
-    // （window.location.reload() は standalone PWA で画面が真っ白になるため使わない）
+  const finishLogin = (shouldMigrate: boolean) => {
+    // ログイン直後は現在の設定画面を再マウントせず、ホームへの遷移を最優先する。
+    // 以前はクラウド確認・移行を await してから refreshData() していたため、Safari
+    // PWA では通信待ちや再マウントとの競合で画面が表示されないことがあった。
     refreshRepos();
-    refreshData();
-    // ログイン完了後はアプリ内遷移でホームを表示する。
-    // replace にして、戻る操作でログインフォームへ戻らないようにする。
     router.replace("/");
+
+    // 移行はホーム表示をブロックしない。完了後にデータソースを更新し、
+    // ホームを再マウントして取り込んだ記録を反映する。
+    if (shouldMigrate) {
+      void migrateLocalToCloud()
+        .then(() => {
+          refreshRepos();
+          refreshData();
+        })
+        .catch((err) => console.error("端末データの取り込みに失敗", err));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,6 +116,24 @@ export function AccountSection() {
     setError(null);
     setNotice(null);
     try {
+      let shouldMigrate = mode === "signup";
+
+      // 確認ダイアログは認証通知で画面が切り替わる前に済ませる。
+      // 実際の移行時にもクラウドが空であることを再確認するため、既存記録は守られる。
+      if (mode === "login") {
+        try {
+          if (await localHasPersonalData()) {
+            shouldMigrate = window.confirm(
+              "この端末に保存された記録があります。\n" +
+                "ログインしたアカウントが空の場合に取り込みますか？\n" +
+                "既にアカウントへ保存済みの記録は変更されません。",
+            );
+          }
+        } catch (err) {
+          console.error("端末データの確認に失敗", err);
+        }
+      }
+
       if (mode === "signup") {
         if (password.length < PASSWORD_MIN_LENGTH) {
           throw Object.assign(new Error("weak"), { code: "auth/weak-password" });
@@ -136,7 +142,7 @@ export function AccountSection() {
       } else {
         await signInWithEmail(email, password);
       }
-      await finishLogin(mode === "signup");
+      finishLogin(shouldMigrate);
     } catch (err) {
       console.error(mode === "signup" ? "新規登録に失敗" : "ログインに失敗", err);
       setError(messageForCode(authErrorCode(err)));
