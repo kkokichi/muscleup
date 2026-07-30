@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { Award, History, Medal, Sparkles, Users } from "lucide-react";
+import { Activity, Award, History, Medal, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const LINKS = [
   { href: "/achievements", label: "ベスト", icon: Award },
   { href: "/badges", label: "バッジ", icon: Medal },
   { href: "/history", label: "履歴", icon: History },
-  { href: "/friends", label: "フレンド", icon: Users },
+  { href: "/body", label: "身体記録", icon: Activity },
   { href: "/massu", label: "マッスー", icon: Sparkles },
 ] as const;
 

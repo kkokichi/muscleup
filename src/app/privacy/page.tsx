@@ -24,7 +24,7 @@ export default function PrivacyPage() {
       </Link>
 
       <div className="space-y-5 text-sm leading-relaxed text-foreground">
-        <p className="text-xs text-muted-foreground">最終更新日: 2026年7月15日</p>
+        <p className="text-xs text-muted-foreground">最終更新日: 2026年7月30日</p>
 
         <p>
           MuscleUp（以下「本アプリ」）は、ユーザーのプライバシーを尊重します。
@@ -38,21 +38,15 @@ export default function PrivacyPage() {
               既定では<b>お使いの端末内のみ</b>に保存されます。
             </li>
             <li>
-              <b>メールアドレスとパスワードでのログイン（任意）</b>を行った場合のみ、
-              メールアドレスと記録がクラウド（Google Firebase / Firestore）に
-              同期・保存されます。パスワードは Firebase Authentication が管理し、
-              本アプリが保持することはありません。
-            </li>
-            <li>
-              <b>位置情報（任意）</b>は、ジムのチェックイン機能を使う場合にのみ
-              取得し、地図表示のために使用します。バックグラウンドでの追跡は行いません。
+              ログイン機能およびクラウド同期は使用しません。メールアドレスや
+              パスワードを本アプリが収集することはありません。
             </li>
           </ul>
         </Section>
 
         <Section title="2. 利用目的">
           <p>
-            取得した情報は、トレーニング記録の表示・集計・同期など、
+            端末内に保存した情報は、トレーニング記録の表示・集計など、
             本アプリの機能を提供する目的にのみ使用します。
           </p>
         </Section>
@@ -61,15 +55,14 @@ export default function PrivacyPage() {
           <p>
             本アプリは、ユーザーの個人データを第三者に販売しません。
             広告表示や広告目的のトラッキングは行いません。
-            クラウド同期および地図機能のため、Google のサービスを利用します
-            （Google のプライバシーポリシーが適用されます）。
+            トレーニング記録を外部サービスへ送信しません。
           </p>
         </Section>
 
         <Section title="4. データの削除">
           <p>
-            端末内のデータはアプリの削除、または端末の設定から消去できます。
-            クラウド同期を利用した場合の削除をご希望の際は、下記までご連絡ください。
+            端末内のデータはアプリの削除、ブラウザのWebサイトデータ消去、
+            または端末の設定から消去できます。
           </p>
         </Section>
 

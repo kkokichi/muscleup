@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Info, Timer } from "lucide-react";
+import { Bell, HardDrive, Info, Timer } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DisplayNameInput } from "@/components/common/DisplayNameInput";
@@ -10,8 +10,6 @@ import { useUserName } from "@/hooks/useUserName";
 import { useRestTimerStore } from "@/stores/restTimerStore";
 import { cn } from "@/lib/utils";
 import { useReminderSettings } from "../hooks/useReminderSettings";
-import { AccountSection } from "./AccountSection";
-import { BlockedUsersSection } from "./BlockedUsersSection";
 
 const REST_PRESETS = [30, 60, 90, 120, 150, 180] as const;
 
@@ -28,12 +26,24 @@ export function SettingsView() {
 
   return (
     <div>
-      <PageHeader title="設定" subtitle="プロフィール・通知" />
+      <PageHeader title="設定" subtitle="端末保存・通知" />
 
       <div className="space-y-4">
-        <AccountSection />
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="flex gap-3 p-4">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <HardDrive className="size-5 text-primary" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold">この端末に保存</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                ログインや通信を使わず、記録をこのアプリ内からすぐに読み込みます。
+                Safari版とホーム画面版は別の保存領域になるため、いつも同じ方をお使いください。
+              </p>
+            </div>
+          </CardContent>
+        </Card>
         <ThemeToggle />
-        <BlockedUsersSection />
 
         <Card className="border-border bg-card">
           <CardContent className="p-4">
@@ -43,7 +53,7 @@ export function SettingsView() {
               onChange={(v) => saveName(v)}
             />
             <p className="mt-2 text-[11px] text-muted-foreground">
-              チェックインやアドバイス投稿で表示される名前です
+              この端末内のプロフィールに使う名前です
             </p>
           </CardContent>
         </Card>
