@@ -15,7 +15,11 @@ import {
   signOutUser,
   signUpWithEmail,
 } from "@/lib/firebase";
-import { migrateLocalToCloud } from "@/repositories/migration";
+import {
+  cloudHasData,
+  localHasPersonalData,
+  migrateLocalToCloud,
+} from "@/repositories/migration";
 import { refreshRepos } from "@/repositories";
 import { useDataRefreshStore } from "@/stores/dataRefreshStore";
 import { useAuthUser } from "@/hooks/useAuthUser";
@@ -86,9 +90,27 @@ export function AccountSection() {
     };
   }, [user]);
 
-  const finishLogin = async () => {
-    // 端末ローカルのデータをアカウントへ移行（クラウドが空の場合のみ）
-    await migrateLocalToCloud();
+  const finishLogin = async (isSignup: boolean) => {
+    if (isSignup) {
+      // 新規登録: 自分の新アカウントに、この端末の現在のデータを引き継ぐ
+      await migrateLocalToCloud();
+    } else {
+      // ログイン: アカウント（クラウド）のデータを正とし、端末ローカルは自動合流しない。
+      // 「端末にローカルがあり、かつアカウントが空」のときだけ、取り込みを明示確認する。
+      // （他端末のローカル記録がアカウントに混入するのを防ぐ）
+      try {
+        if ((await localHasPersonalData()) && !(await cloudHasData())) {
+          const ok = window.confirm(
+            "この端末に保存された記録があります。\n" +
+              "ログインしたアカウントに取り込みますか？\n" +
+              "「キャンセル」を選ぶと、アカウントに保存済みの記録が表示されます。",
+          );
+          if (ok) await migrateLocalToCloud();
+        }
+      } catch (err) {
+        console.error("ログイン時のデータ確認に失敗", err);
+      }
+    }
     // Repository Factory を再評価し、画面を再マウントしてデータを取り直す。
     // （window.location.reload() は standalone PWA で画面が真っ白になるため使わない）
     refreshRepos();
@@ -109,7 +131,7 @@ export function AccountSection() {
       } else {
         await signInWithEmail(email, password);
       }
-      await finishLogin();
+      await finishLogin(mode === "signup");
     } catch (err) {
       console.error(mode === "signup" ? "新規登録に失敗" : "ログインに失敗", err);
       setError(messageForCode(authErrorCode(err)));
