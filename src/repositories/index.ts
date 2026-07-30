@@ -4,6 +4,7 @@ import {
   isFirebaseConfigured,
   isNotSignedInError,
   rememberAuthSession,
+  subscribeAuth,
 } from "@/lib/firebase";
 import type { Repositories } from "./interfaces";
 import { localWorkoutLogRepository } from "./local/localWorkoutLogRepository";
@@ -30,6 +31,67 @@ const localRepositories: Repositories = {
 
 let reposPromise: Promise<Repositories> | null = null;
 
+/** 現在の reposPromise がどのUID向けに解決されたか（undefined=未解決） */
+let resolvedForUid: string | null | undefined = undefined;
+/** ログイン中なのにクラウドへ繋げられずローカルへ退避した状態か（要リトライ） */
+let resolvedDegraded = false;
+/** 認証監視を開始済みか */
+let authWatchStarted = false;
+
+const changeListeners = new Set<() => void>();
+
+/**
+ * データソースが切り替わったときに通知を受け取る（UI再取得用）。
+ * DataRefreshBoundary が購読し、配下を再マウントして各フックに取り直させる。
+ */
+export function subscribeReposChanged(listener: () => void): () => void {
+  changeListeners.add(listener);
+  return () => {
+    changeListeners.delete(listener);
+  };
+}
+
+function notifyReposChanged(): void {
+  reposPromise = null;
+  resolvedForUid = undefined;
+  resolvedDegraded = false;
+  for (const listener of changeListeners) listener();
+}
+
+/**
+ * 認証状態を継続的に監視し、データソースを追従させる。
+ *
+ * 以前は「起動時の最初の認証通知だけ」で判定し、その結果を永続的に memo 化して
+ * いた。そのため iOS の PWA がコールドスタートし、セッション復元前の通知（null）を
+ * 拾ってしまうと、以降ずっとローカル（空）を返し続け、UIはログイン中を表示する
+ * のに記録が消える状態から自力で復帰できなかった。
+ * ここで uid の変化を監視し、変わったら Factory を作り直して UI に再取得させる。
+ */
+function startAuthWatch(): void {
+  if (authWatchStarted) return;
+  if (typeof window === "undefined") return;
+  if (!isFirebaseConfigured()) return;
+  authWatchStarted = true;
+
+  subscribeAuth((u) => {
+    const uid = u && !u.isAnonymous ? u.uid : null;
+
+    // 未解決なら、これから resolve() が同じ状態を見るので何もしない
+    if (resolvedForUid === undefined) return;
+
+    // ログインユーザーが変わった（復元・切替・ログアウト）→ データソースを作り直す
+    if (uid !== resolvedForUid) {
+      notifyReposChanged();
+      return;
+    }
+
+    // 同じUIDでも、前回クラウドに繋げず退避していたなら再挑戦する
+    if (uid !== null && resolvedDegraded) {
+      notifyReposChanged();
+    }
+  });
+}
+
 /**
  * Repository Factory（ハイブリッド構成）。
  *
@@ -47,6 +109,7 @@ let reposPromise: Promise<Repositories> | null = null;
  * フルリロードで画面が真っ白になることがあるため、リロードせず再取得する。
  */
 export function getRepos(): Promise<Repositories> {
+  startAuthWatch();
   reposPromise ??= resolve();
   return reposPromise;
 }
@@ -57,6 +120,8 @@ export function getRepos(): Promise<Repositories> {
  */
 export function refreshRepos(): void {
   reposPromise = null;
+  resolvedForUid = undefined;
+  resolvedDegraded = false;
 }
 
 async function resolve(): Promise<Repositories> {
@@ -76,9 +141,18 @@ async function resolve(): Promise<Repositories> {
     user = await getSignedInUser();
   } catch (error) {
     console.error("認証状態の確認に失敗。ローカルで継続します", error);
+    // 未確定のままにして、次の認証通知で作り直せるようにする
+    resolvedForUid = undefined;
     return repos;
   }
-  if (!user) return repos;
+  if (!user) {
+    resolvedForUid = null;
+    resolvedDegraded = false;
+    return repos;
+  }
+  resolvedForUid = user.uid;
+  // クラウド接続に成功するまでは「退避中」とみなし、次の認証通知でリトライ可能にする
+  resolvedDegraded = true;
 
   // 実セッションを確認できたので、次回以降の同期表示（自動保存の保存先表示など）
   // のためにフラグを最新化しておく。
@@ -96,9 +170,12 @@ async function resolve(): Promise<Repositories> {
     repos.checkins = firestore.checkins;
     repos.advice = firestore.advice;
     repos.social = firestore.social;
+    resolvedDegraded = false; // クラウド接続に成功
   } catch (error) {
     if (isNotSignedInError(error)) {
       clearKnownAuthSession();
+      resolvedForUid = null;
+      resolvedDegraded = false;
       return repos;
     }
     console.error("Firestore初期化に失敗。ローカルで継続します", error);
