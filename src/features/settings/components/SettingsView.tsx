@@ -10,6 +10,7 @@ import { useUserName } from "@/hooks/useUserName";
 import { useRestTimerStore } from "@/stores/restTimerStore";
 import { cn } from "@/lib/utils";
 import { useReminderSettings } from "../hooks/useReminderSettings";
+import { BackupSection } from "./BackupSection";
 
 const REST_PRESETS = [30, 60, 90, 120, 150, 180] as const;
 
@@ -43,6 +44,7 @@ export function SettingsView() {
             </div>
           </CardContent>
         </Card>
+        <BackupSection />
         <ThemeToggle />
 
         <Card className="border-border bg-card">

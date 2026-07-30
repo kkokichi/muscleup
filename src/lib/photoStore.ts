@@ -8,7 +8,7 @@ import type { ProgressPhoto } from "@/types";
 const DB_NAME = "muscleup";
 const STORE = "progressPhotos";
 
-interface PhotoRecord extends ProgressPhoto {
+export interface StoredProgressPhoto extends ProgressPhoto {
   blob: Blob;
 }
 
@@ -42,13 +42,15 @@ function tx<T>(
 }
 
 export async function addPhoto(photo: ProgressPhoto, blob: Blob): Promise<void> {
-  await tx("readwrite", (store) => store.put({ ...photo, blob } as PhotoRecord));
+  await tx("readwrite", (store) =>
+    store.put({ ...photo, blob } as StoredProgressPhoto),
+  );
 }
 
 /** メタ情報 + 表示用のObjectURL を新しい順で返す */
 export async function getAllPhotos(): Promise<(ProgressPhoto & { url: string })[]> {
-  const records = await tx<PhotoRecord[]>("readonly", (store) =>
-    store.getAll() as IDBRequest<PhotoRecord[]>,
+  const records = await tx<StoredProgressPhoto[]>("readonly", (store) =>
+    store.getAll() as IDBRequest<StoredProgressPhoto[]>,
   );
   return records
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -57,4 +59,37 @@ export async function getAllPhotos(): Promise<(ProgressPhoto & { url: string })[
 
 export async function deletePhoto(id: string): Promise<void> {
   await tx("readwrite", (store) => store.delete(id));
+}
+
+/** バックアップ用に画像Blobを含むレコードをそのまま取得する。 */
+export function getStoredPhotos(): Promise<StoredProgressPhoto[]> {
+  return tx<StoredProgressPhoto[]>("readonly", (store) =>
+    store.getAll() as IDBRequest<StoredProgressPhoto[]>,
+  );
+}
+
+/** 復元用。既存の進捗写真をすべて指定レコードへ置き換える。 */
+export async function replaceStoredPhotos(
+  photos: StoredProgressPhoto[],
+): Promise<void> {
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const transaction = db.transaction(STORE, "readwrite");
+    const store = transaction.objectStore(STORE);
+    store.clear();
+    for (const photo of photos) store.put(photo);
+
+    transaction.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    transaction.onerror = () => {
+      db.close();
+      reject(transaction.error);
+    };
+    transaction.onabort = () => {
+      db.close();
+      reject(transaction.error ?? new Error("写真の復元が中断されました"));
+    };
+  });
 }
