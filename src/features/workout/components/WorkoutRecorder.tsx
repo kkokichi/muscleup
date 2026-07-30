@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarDays, Clock, Plus } from "lucide-react";
 import type { ExerciseRecord, WorkoutEntry, WorkoutLog } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,7 @@ function buildSessionIndex(
 }
 
 export function WorkoutRecorder() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const requestedLogId = searchParams.get("id");
   const requestedDate = searchParams.get("date");
@@ -184,6 +185,14 @@ export function WorkoutRecorder() {
     setPickerOpen(false);
   };
 
+  const handleDateChange = async (nextDate: string) => {
+    if (!draft || nextDate === draft.date) return;
+    // 現在の入力を確定してからURLを切り替える。切替先に実績があれば、
+    // requestedDate の初期化処理が既存ログを同じ入力画面へ復元する。
+    await saveNow();
+    router.replace(`/workout/new?date=${nextDate}`, { scroll: false });
+  };
+
   return (
     <div>
       <PageHeader title="ワークアウト" subtitle={formatDateJa(draft.date)} />
@@ -197,7 +206,9 @@ export function WorkoutRecorder() {
           type="date"
           value={draft.date}
           max={todayISO()}
-          onChange={(e) => e.target.value && setDate(e.target.value)}
+          onChange={(e) => {
+            if (e.target.value) void handleDateChange(e.target.value);
+          }}
           aria-label="ワークアウトの日付"
           className="bg-transparent text-sm font-semibold tabular-nums outline-none"
         />
