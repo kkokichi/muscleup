@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
   basePath: isGitHubPages ? "/muscleup" : undefined,
   trailingSlash: true,
   images: { unoptimized: true },
+  // サービスワーカーの登録URL/スコープ算出用にクライアントへ basePath を渡す
+  env: {
+    NEXT_PUBLIC_BASE_PATH: isGitHubPages ? "/muscleup" : "",
+  },
   // 親ディレクトリのlockfileによるworkspace root誤認識と、
   // 非ASCIIパスでのTurbopackの不具合を避けるため明示する
   turbopack: {

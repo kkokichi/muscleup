@@ -4,6 +4,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { DataRefreshBoundary } from "@/components/layout/DataRefreshBoundary";
 import { ClientOnly } from "@/components/layout/ClientOnly";
 import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 const basePath = process.env.GITHUB_PAGES === "true" ? "/muscleup" : "";
@@ -58,6 +59,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
+        <ServiceWorkerRegister />
         <ThemeProvider>
           <AppShell>
             <AppErrorBoundary>
