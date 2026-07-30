@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { DataRefreshBoundary } from "@/components/layout/DataRefreshBoundary";
+import { ClientOnly } from "@/components/layout/ClientOnly";
 import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
@@ -60,7 +61,17 @@ export default function RootLayout({
         <ThemeProvider>
           <AppShell>
             <AppErrorBoundary>
-              <DataRefreshBoundary>{children}</DataRefreshBoundary>
+              {/* 静的エクスポート＋PWAのため、実行時可変値（日付・localStorage）は
+                  マウント後にだけ描画してハイドレーション不一致を根絶する */}
+              <ClientOnly
+                fallback={
+                  <div className="flex min-h-dvh items-center justify-center">
+                    <div className="size-10 animate-pulse rounded-2xl bg-secondary" />
+                  </div>
+                }
+              >
+                <DataRefreshBoundary>{children}</DataRefreshBoundary>
+              </ClientOnly>
             </AppErrorBoundary>
           </AppShell>
         </ThemeProvider>
