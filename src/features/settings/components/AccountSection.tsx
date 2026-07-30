@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { LogIn, LogOut, MailCheck, ShieldAlert, UserCircle, UserPlus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ function messageForCode(code: string): string {
  * ログイン中は個人データがアカウント（Firestore users/{uid}）に保存される。
  */
 export function AccountSection() {
+  const router = useRouter();
   const { user, loading } = useAuthUser();
   const refreshData = useDataRefreshStore((s) => s.bump);
   const [mode, setMode] = useState<Mode>("login");
@@ -115,6 +117,9 @@ export function AccountSection() {
     // （window.location.reload() は standalone PWA で画面が真っ白になるため使わない）
     refreshRepos();
     refreshData();
+    // ログイン完了後はアプリ内遷移でホームを表示する。
+    // replace にして、戻る操作でログインフォームへ戻らないようにする。
+    router.replace("/");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
