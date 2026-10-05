@@ -1,5 +1,8 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Exercise, WorkoutLog } from "@/types";
 import {
@@ -16,15 +19,23 @@ import { cn } from "@/lib/utils";
 
 const WEEKDAYS = ["月", "火", "水", "木", "金", "土", "日"] as const;
 
-function monthDays(today: string) {
+/**
+ * 表示対象月の日付配列を作る。
+ * monthOffset は今月からの相対月（0=今月 / -1=前月 / +1=翌月）。
+ * Date(year, month + offset, 1) は年をまたいでも正規化されるため、
+ * 12月→1月のような繰り上がりもそのまま扱える。
+ */
+function monthDays(today: string, monthOffset: number) {
   const base = new Date(`${today}T00:00:00`);
-  const year = base.getFullYear();
-  const month = base.getMonth();
-  const first = new Date(year, month, 1);
+  const thisYear = base.getFullYear();
+  const first = new Date(thisYear, base.getMonth() + monthOffset, 1);
+  const year = first.getFullYear();
+  const month = first.getMonth();
   const last = new Date(year, month + 1, 0);
   const leading = (first.getDay() + 6) % 7;
   return {
-    label: `${month + 1}月`,
+    // 今年以外を見ているときは年も出して迷子にならないようにする
+    label: year === thisYear ? `${month + 1}月` : `${year}年${month + 1}月`,
     leading,
     days: Array.from({ length: last.getDate() }, (_, index) => {
       const day = index + 1;
@@ -43,12 +54,16 @@ interface MonthlyCalendarCardProps {
 /** 月間カレンダー。各記録日はその日の主要部位の色で塗り分ける */
 export function MonthlyCalendarCard({ logs, exerciseById }: MonthlyCalendarCardProps) {
   const today = todayISO();
-  const activity = buildActivityByDate(logs);
-  const dominant = calcDominantCategoryByDate(
-    logs,
-    (id) => exerciseById.get(id)?.categoryId,
+  // 今月からの相対月。0=今月、負=過去。未来は記録が無いため今月で止める
+  const [monthOffset, setMonthOffset] = useState(0);
+
+  const activity = useMemo(() => buildActivityByDate(logs), [logs]);
+  const dominant = useMemo(
+    () => calcDominantCategoryByDate(logs, (id) => exerciseById.get(id)?.categoryId),
+    [logs, exerciseById],
   );
-  const month = monthDays(today);
+  const month = useMemo(() => monthDays(today, monthOffset), [today, monthOffset]);
+
   const trainedThisMonth = month.days.filter((day) => activity.has(day.iso)).length;
 
   // その月に登場する部位のみ、カテゴリ定義順で凡例に出す
@@ -58,17 +73,36 @@ export function MonthlyCalendarCard({ logs, exerciseById }: MonthlyCalendarCardP
   return (
     <Card className="h-full border-border bg-card">
       <CardContent className="p-3.5">
-        <div className="mb-2.5 flex items-center justify-between gap-2">
+        <div className="mb-2.5 flex items-center justify-between gap-1">
           <Link
             href="/history"
-            className="flex items-center gap-1.5 transition-colors active:text-primary"
+            className="flex min-w-0 items-center gap-1.5 transition-colors active:text-primary"
           >
-            <CalendarDays className="size-4 text-primary" />
-            <p className="text-sm font-bold">{month.label}</p>
+            <CalendarDays className="size-4 shrink-0 text-primary" />
+            <p className="truncate text-sm font-bold">{month.label}</p>
           </Link>
-          <span className="text-[11px] font-semibold text-muted-foreground">
-            {trainedThisMonth}日
-          </span>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              aria-label="前の月"
+              onClick={() => setMonthOffset((v) => v - 1)}
+              className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors active:bg-secondary"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <span className="text-[11px] font-semibold tabular-nums text-muted-foreground">
+              {trainedThisMonth}日
+            </span>
+            <button
+              type="button"
+              aria-label="次の月"
+              onClick={() => setMonthOffset((v) => Math.min(0, v + 1))}
+              disabled={monthOffset >= 0}
+              className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors active:bg-secondary disabled:opacity-30"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-7 gap-1.5">
